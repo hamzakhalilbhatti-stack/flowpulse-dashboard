@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FlowPulse — n8n Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#050607;--s1:#0b0d10;--s2:#111418;--s3:#171b21;
+  --b1:rgba(255,255,255,0.055);--b2:rgba(255,255,255,0.1);
+  --tx:#e4e7ec;--mu:#576070;--mu2:#8490a0;
+  --ac:#00d4ff;--ac2:rgba(0,212,255,0.1);
+  --gr:#0fba81;--gr2:rgba(15,186,129,0.1);
+  --ye:#f59e0b;--ye2:rgba(245,158,11,0.1);
+  --re:#f04444;--re2:rgba(240,68,68,0.08);
+  --pu:#8b5cf6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.45}
+
+/* ── LOGIN ──────────────────────────────────────────── */
+#loginPage{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.lorb{position:absolute;border-radius:50%;filter:blur(130px);opacity:0.13;animation:float 9s ease-in-out infinite}
+.lorb.a{width:520px;height:520px;background:var(--ac);top:-120px;left:-120px}
+.lorb.b{width:420px;height:420px;background:var(--pu);bottom:-100px;right:-100px;animation-delay:4s}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(28px,18px)}}
+.lcard{position:relative;z-index:1;background:rgba(11,13,16,0.9);border:1px solid var(--b2);border-radius:20px;padding:42px 38px;width:420px;max-width:95vw;backdrop-filter:blur(20px);animation:cardIn .5s cubic-bezier(.4,0,.2,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(22px) scale(.97)}to{opacity:1;transform:none}}
+.l-logo{display:flex;align-items:center;gap:10px;margin-bottom:30px}
+.l-icon{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 0 22px rgba(0,212,255,.28)}
+.l-name{font-size:19px;font-weight:800;letter-spacing:-.4px}.l-name span{color:var(--ac)}
+.l-tag{font-size:10px;color:var(--mu2);font-weight:500;letter-spacing:.5px}
+.l-title{font-size:21px;font-weight:800;letter-spacing:-.4px;margin-bottom:5px}
+.l-sub{font-size:12px;color:var(--mu2);margin-bottom:26px}
+.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.fl{font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.9px}
+.fi-wrap{position:relative}
+.fi{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:11px 38px 11px 13px;color:var(--tx);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+.fi:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,212,255,.07)}
+.fi::placeholder{color:var(--mu)}
+.eye{position:absolute;right:11px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--mu);font-size:14px;transition:color .15s}
+.eye:hover{color:var(--tx)}
+.api-toggle-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--mu2);cursor:pointer;margin:18px 0 14px;padding-top:16px;border-top:1px solid var(--b1)}
+.api-toggle-row input{accent-color:var(--ac)}
+.lbtn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;margin-top:6px;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.lbtn:hover{opacity:.87;transform:translateY(-1px)}.lbtn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.lerr{background:var(--re2);border:1px solid rgba(240,68,68,.22);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--re);margin-top:10px;display:none}
+
+/* ── APP ────────────────────────────────────────────── */
+#appPage{display:none}
+.rbar{height:2px;background:linear-gradient(90deg,var(--ac),var(--pu));position:fixed;top:0;left:220px;right:0;z-index:300;transform:scaleX(0);transform-origin:left}
+.rbar.go{transform:scaleX(1);transition:transform 9.5s linear}
+.rbar.done{opacity:0;transition:opacity .3s}
+
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;z-index:100}
+.slogo{padding:20px 16px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:9px}
+.slogo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,212,255,.18)}
+.slogo-text{font-size:15px;font-weight:800;letter-spacing:-.3px;flex:1}.slogo-text span{color:var(--ac)}
+.sbadge{font-size:9px;background:rgba(15,186,129,.15);color:var(--gr);padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.5px}
+.snav{flex:1;padding:12px 9px;display:flex;flex-direction:column;gap:1px;overflow-y:auto}
+.snav-sec{font-size:9px;font-weight:700;color:var(--mu);letter-spacing:1.5px;text-transform:uppercase;padding:9px 8px 3px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--mu2);cursor:pointer;transition:all .15s;text-decoration:none}
+.ni:hover{background:var(--s2);color:var(--tx)}.ni.active{background:rgba(0,212,255,.08);color:var(--ac)}
+.ni .ic{font-size:13px;width:17px;text-align:center}
+.nbadge{margin-left:auto;background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px}
+.sbot{padding:10px 9px;border-top:1px solid var(--b1)}
+.urow{display:flex;align-items:center;gap:9px;padding:9px;border-radius:8px;background:var(--s2);cursor:pointer;transition:background .15s}
+.urow:hover{background:var(--s3)}
+.ava{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.uinfo{flex:1;min-width:0}
+.uname{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uemail{font-size:10px;color:var(--mu2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lout{color:var(--mu);font-size:13px;cursor:pointer;padding:3px;border-radius:4px;transition:color .15s}
+.lout:hover{color:var(--re)}
+
+/* MAIN */
+.main{margin-left:220px;min-height:100vh}
+.topbar{height:56px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--b1);background:rgba(5,6,7,.87);backdrop-filter:blur(16px);position:sticky;top:0;z-index:50;gap:11px}
+.tb-title{font-size:15.5px;font-weight:700;flex:1;letter-spacing:-.2px}
+.tb-title .sub{color:var(--mu);font-weight:400;font-size:12.5px;margin-left:6px}
+.tb-r{display:flex;align-items:center;gap:9px}
+.srch{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:6px 10px;width:190px;transition:border-color .15s}
+.srch:focus-within{border-color:var(--ac)}
+.srch input{background:none;border:none;outline:none;color:var(--tx);font-size:12px;width:100%;font-family:'Syne',sans-serif}
+.srch input::placeholder{color:var(--mu)}
+.lpill{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--gr);background:var(--gr2);border:1px solid rgba(15,186,129,.18);padding:4px 9px;border-radius:99px}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--gr);box-shadow:0 0 5px var(--gr);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Syne',sans-serif}
+.btn:hover{background:var(--s3)}.btn-p{background:linear-gradient(135deg,var(--ac),#009ec4);border-color:transparent;color:#000;font-weight:700}
+.btn-p:hover{opacity:.86;background:linear-gradient(135deg,var(--ac),#009ec4)}
+
+/* CONTENT */
+.content{padding:22px;display:flex;flex-direction:column;gap:18px}
+
+/* TOP ALERT */
+.talert{background:var(--re2);border:1px solid rgba(240,68,68,.2);border-radius:9px;padding:10px 15px;display:flex;align-items:center;gap:9px;font-size:12.5px;animation:fadeD .4s ease}
+@keyframes fadeD{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.talert b{color:var(--re)}.talert-x{cursor:pointer;color:var(--mu);font-size:17px;line-height:1;margin-left:auto}
+.talert-x:hover{color:var(--tx)}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:17px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:up .5s ease both}
+.stat:hover{border-color:var(--b2);transform:translateY(-2px)}
+.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:0;transition:opacity .3s}
+.stat:hover::after{opacity:1}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
+@keyframes up{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:none}}
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.st-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--mu2)}
+.st-ico{width:29px;height:29px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ico-b{background:rgba(0,212,255,.1)}.ico-g{background:var(--gr2)}.ico-y{background:var(--ye2)}.ico-r{background:var(--re2)}
+.st-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.st-note{font-size:10.5px}.cup{color:var(--gr)}.cdn{color:var(--re)}.cnm{color:var(--mu2)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:9px}
+.sb{flex:1;border-radius:2px}.sb.g{background:rgba(15,186,129,.4)}.sb.b{background:rgba(0,212,255,.35)}.sb.r{background:rgba(240,68,68,.4)}.sb.y{background:rgba(245,158,11,.4)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.rcol{display:flex;flex-direction:column;gap:16px}
+
+/* CARD */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;overflow:hidden}
+.ch{padding:15px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:13px;font-weight:700}
+.cm{font-size:11px;color:var(--mu2);display:flex;align-items:center;gap:5px}
+
+/* TABLE */
+.tabs{display:flex;padding:0 17px;border-bottom:1px solid var(--b1);background:rgba(0,0,0,.1)}
+.tab{padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--mu2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--ac);border-bottom-color:var(--ac)}.tab:hover:not(.active){color:var(--tx)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:9.5px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;padding:10px 17px;border-bottom:1px solid var(--b1);background:rgba(255,255,255,.01)}
+.tbl td{padding:11px 17px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:rgba(255,255,255,.018)}
+.wn{display:flex;flex-direction:column;gap:2px}.wn-m{font-weight:600;font-size:12.5px}.wn-s{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.pd{width:5px;height:5px;border-radius:50%}
+.p-ok{background:var(--gr2);color:var(--gr)}.p-ok .pd{background:var(--gr)}
+.p-er{background:var(--re2);color:var(--re)}.p-er .pd{background:var(--re)}
+.p-mu{background:rgba(90,97,112,.15);color:var(--mu2)}.p-mu .pd{background:var(--mu2)}
+.hb{width:68px}.hbr{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:3px}.hbf{height:100%;border-radius:2px}
+.hpct{font-size:10px;font-family:'JetBrains Mono',monospace}
+.mono{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mu2)}
+.ra{display:flex;gap:4px}
+.ib{width:25px;height:25px;border-radius:5px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;transition:all .15s}
+.ib:hover{background:var(--s3);border-color:var(--b2)}
+
+/* CONN CARD */
+.connp{padding:16px}
+.cstat{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
+.cstat.ok{color:var(--gr)}.cstat.er{color:var(--re)}.cstat.idle{color:var(--mu2)}
+.cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cdot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}.cdot.er{background:var(--re)}.cdot.idle{background:var(--mu)}
+.curl{font-size:10.5px;color:var(--mu2);font-family:'JetBrains Mono',monospace;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wh-url-box{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 11px;margin-top:10px;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--ac);word-break:break-all;cursor:pointer;transition:background .15s}
+.wh-url-box:hover{background:var(--s3)}
+.wh-lbl{font-size:9px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+
+/* LOG */
+.ll{max-height:260px;overflow-y:auto}
+.ll::-webkit-scrollbar{width:3px}.ll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.li{display:flex;align-items:flex-start;gap:9px;padding:9px 15px;border-bottom:1px solid rgba(255,255,255,.022);animation:up .3s ease both}
+.li:last-child{border-bottom:none}
+.lic{font-size:12px;flex-shrink:0;margin-top:1px}
+.lib{flex:1;min-width:0}.lit{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lis{font-size:10px;color:var(--mu2);margin-top:1px;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ltime{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+
+/* HEALTH */
+.hl{padding:13px 15px;display:flex;flex-direction:column;gap:10px}
+.hr{display:flex;flex-direction:column;gap:4px}.hr-top{display:flex;justify-content:space-between;font-size:11.5px}
+.hr-n{font-weight:600}.hr-v{font-family:'JetBrains Mono',monospace;font-size:10.5px}
+.hr-t{height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.hr-f{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+/* BOTTOM */
+.b2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.act{display:flex;align-items:flex-end;gap:4px;height:68px;padding:12px 17px}
+.ac{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.acw{flex:1;display:flex;align-items:flex-end;width:100%}
+.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(0,212,255,.5),rgba(0,212,255,.13));transition:all .3s;cursor:pointer;min-height:3px}
+.acb:hover{background:linear-gradient(180deg,var(--ac),rgba(0,212,255,.3))}
+.acl{font-size:8.5px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.el{padding:11px 15px;display:flex;flex-direction:column;gap:8px}
+.ei{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:var(--re2);border:1px solid rgba(240,68,68,.1)}
+.edot{width:6px;height:6px;border-radius:50%;background:var(--re);margin-top:3px;flex-shrink:0}
+.eb{flex:1;min-width:0}.en{font-size:11.5px;font-weight:600}.em{font-size:10px;color:var(--mu2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.et{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+
+/* EMPTY */
+.empty{padding:28px;text-align:center;color:var(--mu2);font-size:12.5px}
+.empty-i{font-size:26px;margin-bottom:7px}
+
+/* SETUP BANNER */
+.setup-banner{background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(139,92,246,.06));border:1px solid rgba(0,212,255,.2);border-radius:10px;padding:16px 18px;display:flex;align-items:flex-start;gap:12px}
+.setup-icon{font-size:22px;flex-shrink:0}
+.setup-body{flex:1}
+.setup-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.setup-text{font-size:11.5px;color:var(--mu2);line-height:1.6}
+.setup-steps{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.setup-step{display:flex;align-items:flex-start;gap:8px;font-size:11.5px}
+.step-n{width:18px;height:18px;border-radius:50%;background:var(--ac2);color:var(--ac);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-t{color:var(--mu2)}.step-t code{background:var(--s2);color:var(--ac);padding:1px 5px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:10px}
+
+/* MODAL */
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.mbg.open{opacity:1;pointer-events:all}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:440px;max-width:95vw;transform:scale(.95);transition:transform .2s}
+.mbg.open .modal{transform:scale(1)}
+.mh{font-size:15px;font-weight:800;margin-bottom:4px}.ms{font-size:12px;color:var(--mu2);margin-bottom:18px}
+.mac{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+
+/* TOAST */
+.tw{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:9998}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:10px 13px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;min-width:210px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.toast.ok{border-color:rgba(15,186,129,.28)}.toast.er{border-color:rgba(240,68,68,.28)}.toast.in{border-color:rgba(0,212,255,.28)}
+
+/* SPIN */
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:1080px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.rbar{left:0}.stats{grid-template-columns:1fr}.b2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div style="position:absolute;inset:0;overflow:hidden">
+    <div class="lorb a"></div>
+    <div class="lorb b"></div>
+  </div>
+  <div class="lcard">
+    <div class="l-logo">
+      <div class="l-icon">⚡</div>
+      <div>
+        <div class="l-name">Flow<span>Pulse</span></div>
+        <div class="l-tag">n8n Automation Intelligence</div>
+      </div>
+    </div>
+    <div class="l-title">Welcome back</div>
+    <div class="l-sub">Sign in to monitor your workflows in real-time</div>
+    <div class="fg">
+      <div class="fl">Email</div>
+      <div class="fi-wrap"><input class="fi" type="email" id="lEmail" placeholder="you@example.com" autocomplete="email"/></div>
+    </div>
+    <div class="fg">
+      <div class="fl">Password</div>
+      <div class="fi-wrap">
+        <input class="fi" type="password" id="lPass" placeholder="Enter your password" style="padding-right:38px"/>
+        <span class="eye" onclick="togglePw('lPass',this)">👁</span>
+      </div>
+    </div>
+    <label class="api-toggle-row">
+      <input type="checkbox" id="showApi" onchange="document.getElementById('apiFields').style.display=this.checked?'block':'none'"/>
+      Connect FlowPulse Worker on login
+    </label>
+    <div id="apiFields" style="display:none">
+      <div class="fg">
+        <div class="fl">Cloudflare Worker URL</div>
+        <input class="fi" type="text" id="lWorker" placeholder="https://flowpulse.yourname.workers.dev"/>
+      </div>
+    </div>
+    <button class="lbtn" id="lBtn" onclick="doLogin()">Sign In →</button>
+    <div class="lerr" id="lErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appPage">
+  <div class="rbar" id="rbar"></div>
+  <aside class="sidebar">
+    <div class="slogo">
+      <div class="slogo-icon">⚡</div>
+      <div class="slogo-text">Flow<span>Pulse</span></div>
+      <span class="sbadge">LIVE</span>
+    </div>
+    <nav class="snav">
+      <div class="snav-sec">Overview</div>
+      <div class="ni active"><span class="ic">⬡</span>Dashboard</div>
+      <div class="ni"><span class="ic">⟳</span>Workflows</div>
+      <div class="ni"><span class="ic">≡</span>Executions</div>
+      <div class="snav-sec">Monitor</div>
+      <div class="ni"><span class="ic">◎</span>Health Scores</div>
+      <div class="ni"><span class="ic">⚠</span>Alerts <span class="nbadge" id="aBadge">0</span></div>
+      <div class="ni"><span class="ic">↗</span>Analytics</div>
+      <div class="snav-sec">Config</div>
+      <div class="ni" onclick="showModal()"><span class="ic">◈</span>API Settings</div>
+      <div class="ni"><span class="ic">⚙</span>Preferences</div>
+    </nav>
+    <div class="sbot">
+      <div class="urow">
+        <div class="ava" id="sAva">?</div>
+        <div class="uinfo">
+          <div class="uname" id="sName">—</div>
+          <div class="uemail" id="sEmail">—</div>
+        </div>
+        <div class="lout" title="Sign out" onclick="logout()">⏻</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-title">Dashboard <span class="sub">/ Live Overview</span></div>
+      <div class="tb-r">
+        <div class="srch">
+          <span style="color:var(--mu);font-size:12px">⌕</span>
+          <input type="text" placeholder="Search workflows…" id="srch" oninput="filterWf()"/>
+        </div>
+        <div class="lpill"><div class="ldot"></div>Live</div>
+        <button class="btn btn-p" onclick="fetchData(true)">↻ Refresh</button>
+        <button class="btn" onclick="showModal()">⚙ Settings</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- ALERT -->
+      <div class="talert" id="talert" style="display:none">
+        <span>⚠️</span>
+        <div id="talertTxt"></div>
+        <span class="talert-x" onclick="this.parentElement.style.display='none'">×</span>
+      </div>
+
+      <!-- SETUP BANNER (shown when no worker URL) -->
+      <div class="setup-banner" id="setupBanner">
+        <div class="setup-icon">🚀</div>
+        <div class="setup-body">
+          <div class="setup-title">Connect your n8n workflows in 3 steps</div>
+          <div class="setup-steps">
+            <div class="setup-step"><div class="step-n">1</div><div class="step-t">Deploy <code>worker.js</code> to Cloudflare Workers → click <b>Start with Hello World!</b> → paste the code → deploy</div></div>
+            <div class="setup-step"><div class="step-n">2</div><div class="step-t">Enter your Worker URL in <b>⚙ Settings</b> above</div></div>
+            <div class="setup-step"><div class="step-n">3</div><div class="step-t">Import <code>flowpulse-reporter.json</code> into n8n → add the Code node to any workflow → it starts reporting instantly</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats">
+        <div class="stat">
+          <div class="st-top"><div class="st-lbl">Unique Workflows</div><div class="st-ico ico-b">⟳</div></div>
+          <div class="st-val" id="sWf">—</div>
+          <div class="st-note cnm" id="sWfN">Waiting for data</div>
+          <div class="spark" id="spWf"></div>
+        </div>
+        <div class="stat">
+          <div class="st-top"><div class="st-lbl">Total Executions</div><div class="st-ico ico-g">▶</div></div>
+          <div class="st-val" id="sEx">—</div>
+          <div class="st-note cnm" id="sExN">Waiting for data</div>
+          <div class="spark" id="spEx"></div>
+        </div>
+        <div class="stat">
+          <div class="st-top"><div class="st-lbl">Success Rate</div><div class="st-ico ico-g">✓</div></div>
+          <div class="st-val" id="sSr">—</div>
+          <div class="st-note cnm" id="sSrN">Waiting for data</div>
+          <div class="spark" id="spSr"></div>
+        </div>
+        <div class="stat">
+          <div class="st-top"><div class="st-lbl">Active Errors</div><div class="st-ico ico-r">⚠</div></div>
+          <div class="st-val" id="sEr" style="color:var(--re)">—</div>
+          <div class="st-note cnm" id="sErN">Waiting for data</div>
+          <div class="spark" id="spEr"></div>
+        </div>
+      </div>
+
+      <!-- MAIN GRID -->
+      <div class="g2">
+        <!-- WORKFLOW TABLE -->
+        <div class="card">
+          <div class="ch">
+            <div class="ct">Workflow Executions</div>
+            <div class="cm">
+              <span id="lastUp">—</span>
+              <span id="wfCnt" style="color:var(--ac);font-weight:700"></span>
+            </div>
+          </div>
+          <div class="tabs">
+            <div class="tab active" onclick="setTab(this,'all')">All</div>
+            <div class="tab" onclick="setTab(this,'success')">Success</div>
+            <div class="tab" onclick="setTab(this,'error')">Errors</div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Workflow</th>
+                  <th>Status</th>
+                  <th>Health</th>
+                  <th>Duration</th>
+                  <th>Items</th>
+                  <th>Last Run</th>
+                </tr>
+              </thead>
+              <tbody id="wfBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- RIGHT COL -->
+        <div class="rcol">
+          <!-- CONNECTION -->
+          <div class="card">
+            <div class="ch">
+              <div class="ct">Worker Connection</div>
+              <div class="cstat idle" id="cstat"><div class="cdot idle" id="cdot"></div><span id="ctxt">Idle</span></div>
+            </div>
+            <div class="connp">
+              <div class="curl" id="curl">No worker configured</div>
+              <div class="wh-lbl" style="margin-top:12px">Your n8n Webhook URL</div>
+              <div class="wh-url-box" id="whUrlBox" onclick="copyWebhook()" title="Click to copy">
+                Configure worker URL first →
+              </div>
+              <div style="font-size:10px;color:var(--mu2);margin-top:6px">↑ Paste this URL in your n8n Code node</div>
+              <div style="margin-top:10px;display:flex;gap:7px">
+                <button class="btn" style="flex:1;justify-content:center" onclick="showModal()">⚙ Configure</button>
+                <button class="btn btn-p" style="flex:1;justify-content:center" onclick="fetchData(true)">↻ Sync</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- LIVE LOG -->
+          <div class="card">
+            <div class="ch">
+              <div class="ct">Live Execution Log</div>
+              <div class="lpill" style="font-size:9.5px;padding:3px 8px"><div class="ldot"></div>Streaming</div>
+            </div>
+            <div class="ll" id="logList">
+              <div class="empty"><div class="empty-i">📋</div>Waiting for executions…</div>
+            </div>
+          </div>
+
+          <!-- HEALTH -->
+          <div class="card">
+            <div class="ch">
+              <div class="ct">Workflow Health</div>
+              <div class="cm">by success rate</div>
+            </div>
+            <div class="hl" id="healthList">
+              <div class="empty"><div class="empty-i">❤️</div>No data yet</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTTOM -->
+      <div class="b2">
+        <div class="card">
+          <div class="ch"><div class="ct">Execution Activity</div><div class="cm">Last 7 days</div></div>
+          <div class="act" id="actChart"><div class="empty" style="width:100%;padding:16px">No activity</div></div>
+        </div>
+        <div class="card">
+          <div class="ch">
+            <div class="ct">Error Alerts</div>
+            <span class="cm" style="color:var(--re)" id="errCnt"></span>
+          </div>
+          <div class="el" id="errList">
+            <div class="empty"><div class="empty-i">✅</div>No errors</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="mbg" id="modal" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="mh">⚙ FlowPulse Settings</div>
+    <div class="ms">Enter your Cloudflare Worker URL to start receiving live n8n data.</div>
+    <div class="fg">
+      <div class="fl">Cloudflare Worker URL</div>
+      <input class="fi" type="text" id="mWorker" placeholder="https://flowpulse.yourname.workers.dev"/>
+    </div>
+    <div style="background:var(--s2);border-radius:8px;padding:11px 13px;font-size:11.5px;color:var(--mu2);line-height:1.65;margin-top:4px">
+      💡 <b style="color:var(--tx)">How to get this URL:</b><br/>
+      1. Go to <b style="color:var(--ac)">workers.cloudflare.com</b> → Create Worker → Start with Hello World!<br/>
+      2. Delete the default code, paste your <code style="background:var(--s3);color:var(--ac);padding:1px 5px;border-radius:3px;font-family:monospace">worker.js</code>, click Deploy<br/>
+      3. Copy the URL shown (e.g. <code style="background:var(--s3);color:var(--ac);padding:1px 5px;border-radius:3px;font-family:monospace">flowpulse.name.workers.dev</code>)
+    </div>
+    <div class="mac">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="saveSettings()">Save & Connect →</button>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  user: null,
+  workerUrl: '',
+  executions: [],
+  tab: 'all',
+  searchQ: '',
+  timer: null,
+};
+
+// ═══════════════════════════════════════════════════════
+// SESSION
+// ═══════════════════════════════════════════════════════
+function saveSession() {
+  sessionStorage.setItem('fp', JSON.stringify({ user: S.user, workerUrl: S.workerUrl }));
+}
+function loadSession() {
+  try {
+    const d = JSON.parse(sessionStorage.getItem('fp') || 'null');
+    if (d?.user) { Object.assign(S, d); return true; }
+  } catch {}
+  return false;
+}
+
+// ═══════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════
+function togglePw(id, el) {
+  const i = document.getElementById(id);
+  i.type = i.type === 'password' ? 'text' : 'password';
+  el.textContent = i.type === 'password' ? '👁' : '🙈';
+}
+
+async function doLogin() {
+  const email  = document.getElementById('lEmail').value.trim();
+  const pass   = document.getElementById('lPass').value;
+  const worker = document.getElementById('lWorker').value.trim().replace(/\/$/,'');
+  const errEl  = document.getElementById('lErr');
+  const btn    = document.getElementById('lBtn');
+  errEl.style.display = 'none';
+
+  if (!email || !email.includes('@')) return showLErr('Enter a valid email address.');
+  if (pass.length < 6) return showLErr('Password must be at least 6 characters.');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Signing in…';
+  await sleep(800);
+
+  S.user = { email, name: email.split('@')[0] };
+  if (worker) S.workerUrl = worker;
+  saveSession();
+  showApp();
+}
+
+function showLErr(msg) {
+  document.getElementById('lErr').textContent = msg;
+  document.getElementById('lErr').style.display = 'block';
+  document.getElementById('lBtn').disabled = false;
+  document.getElementById('lBtn').innerHTML = 'Sign In →';
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appPage').style.display = 'block';
+  const n = S.user.name;
+  document.getElementById('sAva').textContent = n.slice(0,2).toUpperCase();
+  document.getElementById('sName').textContent = n.charAt(0).toUpperCase() + n.slice(1);
+  document.getElementById('sEmail').textContent = S.user.email;
+  document.getElementById('mWorker').value = S.workerUrl;
+  updateConnUI();
+  if (S.workerUrl) {
+    document.getElementById('setupBanner').style.display = 'none';
+    fetchData(true);
+    startTimer();
+  }
+}
+
+function logout() {
+  sessionStorage.clear();
+  clearInterval(S.timer);
+  S.user = null;
+  document.getElementById('appPage').style.display = 'none';
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('lBtn').disabled = false;
+  document.getElementById('lBtn').innerHTML = 'Sign In →';
+}
+
+// ═══════════════════════════════════════════════════════
+// FETCH DATA FROM WORKER
+// ═══════════════════════════════════════════════════════
+async function fetchData(showBar = false) {
+  if (!S.workerUrl) return;
+  if (showBar) animBar();
+  setConn('idle','Syncing…');
+  try {
+    const res  = await fetch(S.workerUrl + '/executions');
+    const data = await res.json();
+    S.executions = data.executions || [];
+    setConn('ok', 'Connected');
+    document.getElementById('curl').textContent = S.workerUrl;
+    document.getElementById('lastUp').textContent = 'Updated just now';
+    renderAll();
+  } catch(e) {
+    setConn('er', 'Error: ' + e.message);
+    toast('Fetch failed — check Worker URL', 'er');
+  }
+}
+
+function startTimer() {
+  clearInterval(S.timer);
+  S.timer = setInterval(() => fetchData(true), 10000);
+}
+
+function animBar() {
+  const b = document.getElementById('rbar');
+  b.classList.remove('go','done');
+  void b.offsetWidth;
+  b.classList.add('go');
+  setTimeout(() => { b.classList.remove('go'); b.classList.add('done'); setTimeout(()=>b.classList.remove('done'),400); }, 9800);
+}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderAll() {
+  renderStats();
+  renderWorkflows();
+  renderLog();
+  renderHealth();
+  renderActivity();
+  renderErrors();
+}
+
+// ── Stats ────────────────────────────────────────────────
+function renderStats() {
+  const exs = S.executions;
+  const names = [...new Set(exs.map(e => e.workflowName))];
+  const total = exs.length;
+  const succ  = exs.filter(e => e.status === 'success').length;
+  const errs  = exs.filter(e => e.status === 'error').length;
+  const rate  = total > 0 ? Math.round((succ/total)*1000)/10 : 0;
+  const today = exs.filter(e => isToday(new Date(e.receivedAt))).length;
+
+  document.getElementById('sWf').textContent  = names.length || '—';
+  document.getElementById('sEx').textContent  = total ? total.toLocaleString() : '—';
+  document.getElementById('sSr').innerHTML    = total ? `${rate}<span style="font-size:15px;color:var(--mu)">%</span>` : '—';
+  document.getElementById('sEr').textContent  = errs || '—';
+
+  document.getElementById('sWfN').innerHTML  = names.length ? `<span class="cup">${names.length} unique workflows</span>` : '<span class="cnm">No data yet</span>';
+  document.getElementById('sExN').innerHTML  = today ? `<span class="cup">↑ ${today} today</span>` : '<span class="cnm">No executions yet</span>';
+  document.getElementById('sSrN').innerHTML  = rate >= 90 ? '<span class="cup">↑ Healthy</span>' : rate > 0 ? '<span class="cdn">↓ Needs attention</span>' : '<span class="cnm">No data yet</span>';
+  document.getElementById('sErN').innerHTML  = errs > 0 ? `<span class="cdn">↑ ${errs} failed</span>` : total ? '<span class="cup">All clear</span>' : '<span class="cnm">No data yet</span>';
+
+  document.getElementById('aBadge').textContent = errs;
+
+  if (errs > 0) {
+    document.getElementById('talertTxt').innerHTML = `<b>${errs} execution${errs>1?'s':''} failed</b> — check the Error Alerts panel below.`;
+    document.getElementById('talert').style.display = 'flex';
+  }
+
+  renderSpark('spWf', makeSpark(names.length), 'b');
+  renderSpark('spEx', makeSparkFromExecs(exs), 'g');
+  renderSpark('spSr', [rate*0.9, rate*0.95, rate*0.88, rate, rate*0.97, rate*0.93, rate], 'g');
+  renderSpark('spEr', makeSparkErrors(exs), 'r');
+}
+
+function makeSpark(n) {
+  return Array.from({length:7},(_,i) => i < 6 ? Math.random()*n*0.8+n*0.2 : n);
+}
+function makeSparkFromExecs(exs) {
+  const days = Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;
+  });
+  return days;
+}
+function makeSparkErrors(exs) {
+  return Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    return exs.filter(e=>e.status==='error'&&new Date(e.receivedAt).toDateString()===d.toDateString()).length;
+  });
+}
+function renderSpark(id, vals, cls) {
+  const max = Math.max(...vals, 1);
+  document.getElementById(id).innerHTML = vals.map(v=>
+    `<div class="sb ${cls}" style="height:${Math.max(8,(v/max)*100)}%"></div>`
+  ).join('');
+}
+
+// ── Workflow table ────────────────────────────────────────
+function setTab(el, tab) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); S.tab = tab; renderWorkflows();
+}
+function filterWf() {
+  S.searchQ = document.getElementById('srch').value.toLowerCase(); renderWorkflows();
+}
+
+function renderWorkflows() {
+  // Group executions by workflow name
+  const grouped = {};
+  S.executions.forEach(e => {
+    if (!grouped[e.workflowName]) grouped[e.workflowName] = [];
+    grouped[e.workflowName].push(e);
+  });
+
+  let rows = Object.entries(grouped).map(([name, exs]) => {
+    const succ    = exs.filter(e=>e.status==='success').length;
+    const health  = Math.round((succ/exs.length)*100);
+    const last    = exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];
+    const hasErr  = exs.some(e=>e.status==='error');
+    return { name, exs, succ, health, last, hasErr };
+  });
+
+  if (S.searchQ) rows = rows.filter(r => r.name.toLowerCase().includes(S.searchQ));
+  if (S.tab === 'success') rows = rows.filter(r => r.last.status === 'success');
+  if (S.tab === 'error')   rows = rows.filter(r => r.hasErr);
+
+  document.getElementById('wfCnt').textContent = rows.length + ' workflows';
+
+  if (!rows.length) {
+    document.getElementById('wfBody').innerHTML =
+      `<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length ? '🔍' : '📡'}</div>${S.executions.length ? 'No workflows match filter' : 'Waiting for n8n webhooks…'}</div></td></tr>`;
+    return;
+  }
+
+  document.getElementById('wfBody').innerHTML = rows.map(r => {
+    const hColor = r.health>=80?'var(--gr)':r.health>=50?'var(--ye)':'var(--re)';
+    const hClass = r.health>=80?'high':r.health>=50?'mid':'low';
+    const pillClass = r.last.status==='success'?'p-ok':r.last.status==='error'?'p-er':'p-mu';
+    const pillLabel = r.last.status==='success'?'Success':r.last.status==='error'?'Failed':'Unknown';
+    const avgDur = Math.round(r.exs.reduce((a,e)=>a+(e.durationMs||0),0)/r.exs.length);
+    const totalItems = r.exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);
+    return `<tr>
+      <td><div class="wn"><div class="wn-m">${esc(r.name)}</div><div class="wn-s">${r.exs.length} exec${r.exs.length!==1?'s':''}</div></div></td>
+      <td><span class="pill ${pillClass}"><span class="pd"></span>${pillLabel}</span></td>
+      <td><div class="hb"><div class="hbr"><div class="hbf" style="width:${r.health}%;background:${hColor}"></div></div><div class="hpct" style="color:${hColor}">${r.health}%</div></div></td>
+      <td><span class="mono">${fmtDur(avgDur)}</span></td>
+      <td><span class="mono">${totalItems.toLocaleString()}</span></td>
+      <td><span class="mono">${timeAgo(new Date(r.last.receivedAt))}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Log ───────────────────────────────────────────────────
+function renderLog() {
+  const exs = [...S.executions].slice(0,12);
+  if (!exs.length) {
+    document.getElementById('logList').innerHTML = '<div class="empty"><div class="empty-i">📋</div>Waiting for executions…</div>';
+    return;
+  }
+  document.getElementById('logList').innerHTML = exs.map((e,i) => {
+    const icon = e.status==='error'?'❌':e.status==='success'?'✅':'▶';
+    const sub  = e.status==='error'
+      ? (e.errorMessage||'Execution failed')
+      : `${fmtDur(e.durationMs)} · ${e.itemsProcessed} items`;
+    return `<div class="li" style="animation-delay:${i*.04}s">
+      <div class="lic">${icon}</div>
+      <div class="lib"><div class="lit">${esc(e.workflowName)}</div><div class="lis">${esc(sub)}</div></div>
+      <div class="ltime">${timeAgo(new Date(e.receivedAt))}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Health ────────────────────────────────────────────────
+function renderHealth() {
+  const grouped = {};
+  S.executions.forEach(e => {
+    if (!grouped[e.workflowName]) grouped[e.workflowName] = [];
+    grouped[e.workflowName].push(e);
+  });
+  const rows = Object.entries(grouped).map(([name,exs]) => {
+    const succ = exs.filter(e=>e.status==='success').length;
+    const score = Math.round((succ/exs.length)*100);
+    const color = score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)';
+    return { name, score, color };
+  }).sort((a,b)=>a.score-b.score).slice(0,6);
+
+  if (!rows.length) {
+    document.getElementById('healthList').innerHTML = '<div class="empty"><div class="empty-i">❤️</div>No data yet</div>';
+    return;
+  }
+  document.getElementById('healthList').innerHTML = rows.map(h =>
+    `<div class="hr">
+      <div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${h.color}">${h.score}%</span></div>
+      <div class="hr-t"><div class="hr-f" style="width:${h.score}%;background:${h.color}"></div></div>
+    </div>`
+  ).join('');
+}
+
+// ── Activity ──────────────────────────────────────────────
+function renderActivity() {
+  const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const counts = Array.from({length:7},(_,i)=>{
+    const d = new Date(); d.setDate(d.getDate()-(6-i));
+    return S.executions.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;
+  });
+  const max = Math.max(...counts, 1);
+  document.getElementById('actChart').innerHTML = days.map((d,i)=>
+    `<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/max)*100)}%" title="${counts[i]} on ${d}"></div></div><div class="acl">${d}</div></div>`
+  ).join('');
+}
+
+// ── Errors ────────────────────────────────────────────────
+function renderErrors() {
+  const errs = S.executions.filter(e=>e.status==='error').slice(0,5);
+  document.getElementById('errCnt').textContent = errs.length ? errs.length + ' active' : '';
+  if (!errs.length) {
+    document.getElementById('errList').innerHTML = '<div class="empty"><div class="empty-i">✅</div>No active errors</div>';
+    return;
+  }
+  document.getElementById('errList').innerHTML = errs.map(e=>
+    `<div class="ei">
+      <div class="edot"></div>
+      <div class="eb">
+        <div class="en">${esc(e.workflowName)}</div>
+        <div class="em">${esc(e.failedNode ? `[${e.failedNode}] ${e.errorMessage||''}` : e.errorMessage||'Unknown error')}</div>
+      </div>
+      <div class="et">${timeAgo(new Date(e.receivedAt))}</div>
+    </div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS MODAL
+// ═══════════════════════════════════════════════════════
+function showModal() {
+  document.getElementById('mWorker').value = S.workerUrl;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal()  { document.getElementById('modal').classList.remove('open'); }
+function closeModalOut(e) { if (e.target===document.getElementById('modal')) closeModal(); }
+function saveSettings() {
+  const w = document.getElementById('mWorker').value.trim().replace(/\/$/,'');
+  if (!w) return toast('Please enter your Worker URL', 'er');
+  S.workerUrl = w;
+  saveSession();
+  updateConnUI();
+  closeModal();
+  document.getElementById('setupBanner').style.display = 'none';
+  toast('Settings saved! Connecting…', 'ok');
+  clearInterval(S.timer);
+  fetchData(true);
+  startTimer();
+}
+
+function updateConnUI() {
+  document.getElementById('curl').textContent = S.workerUrl || 'No worker configured';
+  document.getElementById('mWorker').value = S.workerUrl;
+  const box = document.getElementById('whUrlBox');
+  if (S.workerUrl) {
+    box.textContent = S.workerUrl + '/webhook';
+    box.title = 'Click to copy webhook URL';
+  } else {
+    box.textContent = 'Configure worker URL first →';
+  }
+}
+
+function copyWebhook() {
+  if (!S.workerUrl) return;
+  navigator.clipboard.writeText(S.workerUrl + '/webhook').then(()=>toast('Webhook URL copied!','ok'));
+}
+
+// ═══════════════════════════════════════════════════════
+// CONN STATUS
+// ═══════════════════════════════════════════════════════
+function setConn(type, text) {
+  const el  = document.getElementById('cstat');
+  const dot = document.getElementById('cdot');
+  const txt = document.getElementById('ctxt');
+  el.className  = `cstat ${type}`;
+  dot.className = `cdot ${type}`;
+  txt.textContent = text;
+}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function timeAgo(d) {
+  if (!d||isNaN(d)) return '—';
+  const s = Math.floor((Date.now()-d)/1000);
+  if (s<10) return 'just now';
+  if (s<60) return s+'s ago';
+  if (s<3600) return Math.floor(s/60)+'m ago';
+  if (s<86400) return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+function fmtDur(ms) {
+  if (!ms) return '—';
+  if (ms<1000) return ms+'ms';
+  if (ms<60000) return (ms/1000).toFixed(1)+'s';
+  return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';
+}
+function isToday(d) {
+  const t = new Date();
+  return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function sleep(ms) { return new Promise(r=>setTimeout(r,ms)); }
+
+function toast(msg, type='ok') {
+  const w = document.getElementById('tw');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;
+  w.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(7px)'; el.style.transition='all .3s'; setTimeout(()=>el.remove(),300); },3500);
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+loadSession() ? showApp() : (document.getElementById('loginPage').style.display='flex');
+</script>
+</body>
+</html>
