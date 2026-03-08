@@ -1,0 +1,40 @@
+{
+  "name": "FlowPulse Reporter",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start-node",
+      "name": "When clicking 'Test workflow'",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── FlowPulse Reporter Node ───────────────────────────────\n// Add this node at the END of any workflow you want to monitor.\n// It sends execution data to your FlowPulse dashboard.\n//\n// CONFIGURE:\n//   1. Replace WORKER_URL with your Cloudflare Worker URL\n//   2. Replace WORKFLOW_NAME with this workflow's name\n//   3. Set STATUS to 'success' (use error handler for failures)\n\nconst WORKER_URL    = 'https://flowpulse.yourname.workers.dev';\nconst WORKFLOW_NAME = 'My Workflow Name';  // ← change this\nconst WORKFLOW_ID   = $workflow.id;\n\n// Calculate duration\nconst startedAt  = new Date($execution.startedAt);\nconst finishedAt = new Date();\nconst durationMs = finishedAt - startedAt;\n\n// Count items processed (from previous node output)\nlet itemsProcessed = 0;\ntry {\n  const prevItems = $input.all();\n  itemsProcessed = prevItems.length;\n} catch(e) {}\n\n// Build payload\nconst payload = {\n  workflowName:   WORKFLOW_NAME,\n  workflowId:     WORKFLOW_ID,\n  status:         'success',\n  startedAt:      startedAt.toISOString(),\n  finishedAt:     finishedAt.toISOString(),\n  durationMs:     durationMs,\n  itemsProcessed: itemsProcessed,\n  errorMessage:   null,\n  failedNode:     null,\n};\n\n// Send to FlowPulse\nconst response = await fetch(WORKER_URL + '/webhook', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload),\n});\n\nconst result = await response.json();\nconsole.log('FlowPulse:', result);\n\nreturn [{ json: { flowpulse: result, payload } }];"
+      },
+      "id": "flowpulse-success",
+      "name": "FlowPulse — Report Success",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ─── FlowPulse Error Reporter ──────────────────────────────\n// Add this node as an ERROR HANDLER on your workflow.\n// In n8n: Settings → Error Workflow → select this workflow\n// OR connect it via the error output of nodes.\n\nconst WORKER_URL    = 'https://flowpulse.yourname.workers.dev';\nconst WORKFLOW_NAME = 'My Workflow Name';  // ← change this\n\n// Get error details from n8n error execution data\nlet errorMessage = 'Unknown error';\nlet failedNode   = 'Unknown node';\n\ntry {\n  const errorData = $input.first()?.json;\n  errorMessage = errorData?.error?.message || errorData?.message || 'Execution failed';\n  failedNode   = errorData?.execution?.lastNodeExecuted || errorData?.lastNodeExecuted || 'Unknown';\n} catch(e) {}\n\nconst now = new Date();\n\nconst payload = {\n  workflowName:   WORKFLOW_NAME,\n  workflowId:     $workflow.id,\n  status:         'error',\n  startedAt:      new Date($execution.startedAt).toISOString(),\n  finishedAt:     now.toISOString(),\n  durationMs:     now - new Date($execution.startedAt),\n  itemsProcessed: 0,\n  errorMessage:   errorMessage,\n  failedNode:     failedNode,\n};\n\nconst response = await fetch(WORKER_URL + '/webhook', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify(payload),\n});\n\nconst result = await response.json();\nconsole.log('FlowPulse Error Report:', result);\n\nreturn [{ json: { flowpulse: result } }];"
+      },
+      "id": "flowpulse-error",
+      "name": "FlowPulse — Report Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 460]
+    }
+  ],
+  "connections": {
+    "When clicking 'Test workflow'": {
+      "main": [[{ "node": "FlowPulse — Report Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "meta": { "templateCredsSetupCompleted": true }
+}
