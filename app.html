@@ -354,6 +354,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="ni" onclick="navTo('alerts',this)"><span class="ic">⚠</span>Alerts <span class="nbadge" id="aBadge">0</span></div>
       <div class="ni" onclick="navTo('analytics',this)"><span class="ic">↗</span>Analytics</div>
       <div class="snav-sec">Config</div>
+      <div class="ni" onclick="navTo('statuspage',this)"><span class="ic">🌐</span>Client Status Page</div>
       <div class="ni" onclick="navTo('settings',this)"><span class="ic">◈</span>Account Settings</div>
     </nav>
     <div class="sbot">
@@ -453,7 +454,34 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       </div>
     </div>
 
-    <!-- SETTINGS -->
+    <!-- STATUS PAGE -->
+    <div class="page" id="page-statuspage">
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch"><div class="ct">🌐 Client Status Page</div><div class="cm">Share live workflow status with clients</div></div>
+        <div style="padding:20px">
+          <div style="font-size:13px;color:var(--mu2);line-height:1.7;margin-bottom:18px">
+            Create a public status page and share it with clients. They can see real-time health of only the workflows you choose — no login required.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="openShareModal()">⚡ Create / Edit Status Page</button>
+            <button class="btn" id="viewStatusBtn" onclick="viewStatusPage()" style="display:none">🔗 View My Status Page</button>
+          </div>
+        </div>
+      </div>
+      <div class="card card-last" id="statusPagePreview" style="display:none">
+        <div class="ch"><div class="ct">Your Status Page</div><div class="cm" id="spLinkLabel"></div></div>
+        <div style="padding:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Shareable URL</div>
+          <div style="background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ac);cursor:pointer;word-break:break-all" id="spLinkBox" onclick="copyStatusLink()">—</div>
+          <div style="font-size:10.5px;color:var(--mu2);margin-top:7px">↑ Click to copy · Share this with your clients</div>
+          <div style="margin-top:14px">
+            <div style="font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Public Workflows</div>
+            <div id="spPublicList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-settings">
       <div class="settings-section">
         <div class="settings-title">Account — Stored in Supabase ☁️</div>
@@ -490,6 +518,26 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <div class="ms">Saved permanently to your Supabase profile. Works on any device.</div>
     <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" type="text" id="mWorker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
     <div class="mac"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-p" id="mSaveBtn" onclick="saveWorkerUrl()">Save to Supabase →</button></div>
+  </div>
+</div>
+
+<!-- SHARE / STATUS PAGE MODAL -->
+<div class="mbg" id="shareModal" onclick="closeShareOut(event)">
+  <div class="modal" style="width:520px">
+    <div class="mh">🌐 Create Client Status Page</div>
+    <div class="ms">Choose which workflows to make public. Clients see live health without logging in.</div>
+    <div class="fg"><div class="fl">Page Title</div><input class="fi" type="text" id="sp-title" placeholder="e.g. ACME Corp — Automation Status"/></div>
+    <div class="fg"><div class="fl">Description</div><input class="fi" type="text" id="sp-desc" placeholder="Real-time status of your automations"/></div>
+    <div style="margin-bottom:16px">
+      <div class="fl" style="margin-bottom:8px">Select Workflows to Show</div>
+      <div id="sp-wf-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:10px">
+        <div style="color:var(--mu2);font-size:12px;padding:8px">No workflows yet — run some executions first</div>
+      </div>
+    </div>
+    <div class="mac">
+      <button class="btn" onclick="closeShareModal()">Cancel</button>
+      <button class="btn btn-p" id="spSaveBtn" onclick="saveStatusPage()">Save & Generate Link →</button>
+    </div>
   </div>
 </div>
 
@@ -684,6 +732,7 @@ function showApp() {
   if (workerUrl) {
     fetchData(true);
     startTimer();
+    loadStatusPage();
   } else {
     toast('Welcome! Add your Worker URL in Account Settings to start. ⚡','in');
   }
@@ -700,8 +749,6 @@ async function logout() {
 // ═══════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════
-const pageTitles={dashboard:'Dashboard <span class="sub">/ Live Overview</span>',workflows:'Workflows <span class="sub">/ All</span>',executions:'Executions <span class="sub">/ History</span>',health:'Health Scores <span class="sub">/ Overview</span>',alerts:'Alerts <span class="sub">/ Active</span>',analytics:'Analytics <span class="sub">/ Insights</span>',settings:'Settings <span class="sub">/ Account</span>'};
-
 function navTo(page,el){
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   if(el) el.classList.add('active');
@@ -852,7 +899,86 @@ function isToday(d){const t=new Date();return d.getDate()===t.getDate()&&d.getMo
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(7px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
 
+// ═══════════════════════════════════════════════════════
+// STATUS PAGE
+// ═══════════════════════════════════════════════════════
+const pageTitles={dashboard:'Dashboard <span class="sub">/ Live Overview</span>',workflows:'Workflows <span class="sub">/ All</span>',executions:'Executions <span class="sub">/ History</span>',health:'Health Scores <span class="sub">/ Overview</span>',alerts:'Alerts <span class="sub">/ Active</span>',analytics:'Analytics <span class="sub">/ Insights</span>',statuspage:'Client Status Page <span class="sub">/ Share</span>',settings:'Settings <span class="sub">/ Account</span>'};
+
+function openShareModal(){
+  // Populate workflow checkboxes
+  const names=[...new Set(S.executions.map(e=>e.workflowName))];
+  const existing=S.statusPage?.public_workflows||[];
+  const list=document.getElementById('sp-wf-list');
+  if(!names.length){list.innerHTML='<div style="color:var(--mu2);font-size:12px;padding:8px">No workflows yet — run some executions first</div>';}
+  else{list.innerHTML=names.map(n=>`<label style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s;font-size:12.5px" onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''"><input type="checkbox" value="${esc(n)}" ${existing.includes(n)?'checked':''} style="accent-color:var(--ac);width:14px;height:14px"/>${esc(n)}</label>`).join('');}
+  document.getElementById('sp-title').value=S.statusPage?.page_title||'';
+  document.getElementById('sp-desc').value=S.statusPage?.page_description||'';
+  document.getElementById('shareModal').classList.add('open');
+}
+function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
+function closeShareOut(e){if(e.target.id==='shareModal')closeShareModal();}
+
+async function saveStatusPage(){
+  const title=document.getElementById('sp-title').value.trim()||'Workflow Status';
+  const desc=document.getElementById('sp-desc').value.trim()||'Real-time status of all monitored automations';
+  const checked=[...document.querySelectorAll('#sp-wf-list input:checked')].map(i=>i.value);
+  if(!checked.length) return toast('Select at least one workflow','er');
+  const btn=document.getElementById('spSaveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Saving…';
+
+  // Generate a stable page_id based on user id
+  const pageId = S.user.id.replace(/-/g,'').slice(0,16);
+  const payload={
+    user_id: S.user.id,
+    page_id: pageId,
+    page_title: title,
+    page_description: desc,
+    worker_url: S.profile?.worker_url||'',
+    public_workflows: checked,
+    updated_at: new Date().toISOString(),
+  };
+  const {error}=await sb.from('status_pages').upsert(payload,{onConflict:'page_id'});
+  btn.disabled=false; btn.innerHTML='Save & Generate Link →';
+  if(error) return toast('Error: '+error.message,'er');
+  S.statusPage=payload;
+  closeShareModal();
+  toast('Status page saved! ✓','ok');
+  renderStatusPagePanel();
+}
+
+async function loadStatusPage(){
+  if(!S.user) return;
+  const pageId=S.user.id.replace(/-/g,'').slice(0,16);
+  const {data}=await sb.from('status_pages').select('*').eq('page_id',pageId).single();
+  if(data) S.statusPage=data;
+  renderStatusPagePanel();
+}
+
+function renderStatusPagePanel(){
+  if(!S.statusPage) return;
+  const pageId=S.statusPage.page_id;
+  const baseUrl=window.location.origin+window.location.pathname.replace('app.html','').replace('index.html','');
+  const url=`${baseUrl}status.html?id=${pageId}`;
+  document.getElementById('statusPagePreview').style.display='block';
+  document.getElementById('viewStatusBtn').style.display='flex';
+  document.getElementById('spLinkBox').textContent=url;
+  document.getElementById('spLinkLabel').textContent=S.statusPage.page_title||'';
+  const wfs=S.statusPage.public_workflows||[];
+  document.getElementById('spPublicList').innerHTML=wfs.map(w=>`<span style="background:var(--ac2);border:1px solid rgba(0,212,255,.2);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--ac)">${esc(w)}</span>`).join('');
+}
+
+function copyStatusLink(){
+  const url=document.getElementById('spLinkBox').textContent;
+  navigator.clipboard.writeText(url).then(()=>toast('Status page URL copied! 🔗','ok'));
+}
+function viewStatusPage(){
+  const url=document.getElementById('spLinkBox').textContent;
+  window.open(url,'_blank');
+}
+
+// ═══════════════════════════════════════════════════════
 // START
+
 init();
 </script>
 </body>
