@@ -366,6 +366,12 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="ni" onclick="navTo('settings',this)"><span class="ic">◈</span>Account Settings</div>
     </nav>
     <div class="sbot">
+      <!-- PWA Install Button — always visible in sidebar -->
+      <div id="sidebarInstallBtn" style="display:none;margin-bottom:8px">
+        <button onclick="installPWA()" style="width:100%;padding:9px;border-radius:8px;border:none;background:linear-gradient(135deg,rgba(0,212,255,0.12),rgba(139,92,246,0.12));border:1px solid rgba(0,212,255,0.2);color:#00d4ff;font-size:11.5px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;transition:all .2s">
+          <span>📲</span> Install App
+        </button>
+      </div>
       <div class="urow">
         <div class="ava" id="sAva">?</div>
         <div class="uinfo"><div class="uname" id="sName">—</div><div class="uemail" id="sEmail">—</div></div>
@@ -999,7 +1005,10 @@ if ('serviceWorker' in navigator) {
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  // Show install banner after 4 seconds if not standalone
+  // Show sidebar install button immediately
+  const sb = document.getElementById('sidebarInstallBtn');
+  if (sb) sb.style.display = 'block';
+  // Show bottom banner after 4 seconds if not standalone
   setTimeout(() => {
     if (!window.matchMedia('(display-mode: standalone)').matches) {
       const b = document.getElementById('pwaBanner');
@@ -1028,6 +1037,8 @@ async function installPWA() {
 function dismissPWA() {
   const b = document.getElementById('pwaBanner');
   if (b) b.style.display = 'none';
+  const sb = document.getElementById('sidebarInstallBtn');
+  if (sb) sb.style.display = 'none';
 }
 
 // START
