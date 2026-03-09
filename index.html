@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FlowPulse — n8n Automation Intelligence</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#050607;--s1:#0b0d10;--s2:#111418;--s3:#171b21;
@@ -20,25 +21,22 @@
 body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
 body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.45}
 
-/* ── AUTH PAGES ─────────────────────────────────────── */
+/* ── AUTH ── */
 .auth-bg{position:fixed;inset:0;overflow:hidden;z-index:0}
 .orb{position:absolute;border-radius:50%;filter:blur(140px);opacity:0.12;animation:float 10s ease-in-out infinite}
 .orb.a{width:560px;height:560px;background:var(--ac);top:-140px;left:-140px}
 .orb.b{width:460px;height:460px;background:var(--pu);bottom:-120px;right:-120px;animation-delay:5s}
 .orb.c{width:300px;height:300px;background:var(--gr);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:2.5s}
 @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,15px)}}
-
 .auth-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
 .auth-logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 28px rgba(0,212,255,.3)}
 .auth-logo-name{font-size:22px;font-weight:800;letter-spacing:-.5px}.auth-logo-name span{color:var(--ac)}
 .auth-logo-tag{font-size:10px;color:var(--mu2);font-weight:500;letter-spacing:.5px;margin-top:1px}
-
 .auth-card{background:rgba(11,13,16,0.92);border:1px solid var(--b2);border-radius:20px;padding:36px;width:460px;max-width:95vw;backdrop-filter:blur(24px);animation:cardIn .5s cubic-bezier(.4,0,.2,1)}
 @keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
 .auth-card-title{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:5px}
-.auth-card-sub{font-size:12.5px;color:var(--mu2);margin-bottom:28px;line-height:1.5}
-
+.auth-card-sub{font-size:12.5px;color:var(--mu2);margin-bottom:28px;line-height:1.6}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .fl{font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.9px}
 .fi-wrap{position:relative}
@@ -47,33 +45,17 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .fi::placeholder{color:var(--mu)}
 .fi-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:15px;cursor:pointer;transition:color .15s;user-select:none}
 .fi-icon:hover{color:var(--tx)}
-
 .fi-hint{font-size:10.5px;color:var(--mu2);margin-top:4px;line-height:1.5}
-.fi-hint.er{color:var(--re)}
-.fi-hint.ok{color:var(--gr)}
-
-.auth-divider{display:flex;align-items:center;gap:10px;margin:18px 0;color:var(--mu);font-size:11px}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--b1)}
-
+.fi-hint.er{color:var(--re)}.fi-hint.ok{color:var(--gr)}
 .auth-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
 .auth-btn:hover{opacity:.87;transform:translateY(-1px)}.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .auth-btn.secondary{background:var(--s2);color:var(--tx);border:1px solid var(--b2);margin-top:10px}
 .auth-btn.secondary:hover{background:var(--s3);opacity:1}
-
 .auth-switch{text-align:center;margin-top:18px;font-size:12.5px;color:var(--mu2)}
-.auth-switch a{color:var(--ac);cursor:pointer;font-weight:600;text-decoration:none}
+.auth-switch a{color:var(--ac);cursor:pointer;font-weight:600}
 .auth-switch a:hover{opacity:.8}
-
 .auth-err{background:var(--re2);border:1px solid rgba(240,68,68,.22);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--re);margin-top:12px;display:none;animation:cardIn .3s ease}
-.auth-ok{background:var(--gr2);border:1px solid rgba(15,186,129,.22);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--gr);margin-top:12px;display:none;animation:cardIn .3s ease}
-
-.plan-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
-.plan-card{background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;position:relative}
-.plan-card:hover{border-color:var(--b2)}.plan-card.selected{border-color:var(--ac);background:var(--ac2)}
-.plan-card-name{font-size:13px;font-weight:700;margin-bottom:3px}
-.plan-card-price{font-size:11px;color:var(--mu2)}
-.plan-card-badge{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,var(--ac),var(--pu));color:#000;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px}
-
+.auth-ok-box{background:var(--gr2);border:1px solid rgba(15,186,129,.22);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--gr);margin-top:12px;display:none}
 .step-indicator{display:flex;align-items:center;gap:8px;margin-bottom:24px}
 .step{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
 .step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid var(--b2);color:var(--mu2);transition:all .3s}
@@ -82,12 +64,16 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .step-label{color:var(--mu2)}.step-label.active{color:var(--tx)}
 .step-line{flex:1;height:1px;background:var(--b1)}
 
-/* ── APP ─────────────────────────────────────────────── */
+/* ── LOADING SCREEN ── */
+#loadingPage{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:600;gap:16px}
+.load-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 30px rgba(0,212,255,.3);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.load-text{font-size:13px;color:var(--mu2)}
+
+/* ── APP ── */
 #appPage{display:none}
 .rbar{height:2px;background:linear-gradient(90deg,var(--ac),var(--pu));position:fixed;top:0;left:220px;right:0;z-index:300;transform:scaleX(0);transform-origin:left}
 .rbar.go{transform:scaleX(1);transition:transform 9.5s linear}.rbar.done{opacity:0;transition:opacity .3s}
-
-/* SIDEBAR */
 .sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;z-index:100}
 .slogo{padding:20px 16px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:9px}
 .slogo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,212,255,.18)}
@@ -100,16 +86,13 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .ni .ic{font-size:13px;width:17px;text-align:center}
 .nbadge{margin-left:auto;background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px}
 .sbot{padding:10px 9px;border-top:1px solid var(--b1)}
-.urow{display:flex;align-items:center;gap:9px;padding:9px;border-radius:8px;background:var(--s2);cursor:pointer;transition:background .15s}
-.urow:hover{background:var(--s3)}
+.urow{display:flex;align-items:center;gap:9px;padding:9px;border-radius:8px;background:var(--s2)}
 .ava{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
 .uinfo{flex:1;min-width:0}
 .uname{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .uemail{font-size:10px;color:var(--mu2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lout{color:var(--mu);font-size:13px;cursor:pointer;padding:3px;border-radius:4px;transition:color .15s}
 .lout:hover{color:var(--re)}
-
-/* MAIN */
 .main{margin-left:220px;min-height:100vh}
 .topbar{height:56px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--b1);background:rgba(5,6,7,.87);backdrop-filter:blur(16px);position:sticky;top:0;z-index:50;gap:11px}
 .tb-title{font-size:15.5px;font-weight:700;flex:1;letter-spacing:-.2px}
@@ -124,41 +107,27 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 .btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Syne',sans-serif}
 .btn:hover{background:var(--s3)}.btn-p{background:linear-gradient(135deg,var(--ac),#009ec4);border-color:transparent;color:#000;font-weight:700}
-.btn-p:hover{opacity:.86;background:linear-gradient(135deg,var(--ac),#009ec4)}
-
-/* PAGES */
-.page{display:none;padding:22px;animation:up .35s ease}
-.page.active{display:block}
+.btn-p:hover{opacity:.86}
+.page{display:none;padding:22px;animation:up .35s ease}.page.active{display:block}
 @keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-
-/* CARDS */
 .card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;overflow:hidden;margin-bottom:16px}
 .card-last{margin-bottom:0}
 .ch{padding:15px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
-.ct{font-size:13px;font-weight:700}
-.cm{font-size:11px;color:var(--mu2);display:flex;align-items:center;gap:5px}
-
-/* STATS */
+.ct{font-size:13px;font-weight:700}.cm{font-size:11px;color:var(--mu2);display:flex;align-items:center;gap:5px}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}
 .stat{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:17px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:up .5s ease both}
 .stat:hover{border-color:var(--b2);transform:translateY(-2px)}
-.stat::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:0;transition:opacity .3s}
-.stat:hover::after{opacity:1}
 .stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
 .st-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
 .st-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--mu2)}
 .st-ico{width:29px;height:29px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
-.ico-b{background:rgba(0,212,255,.1)}.ico-g{background:var(--gr2)}.ico-y{background:var(--ye2)}.ico-r{background:var(--re2)}
+.ico-b{background:rgba(0,212,255,.1)}.ico-g{background:var(--gr2)}.ico-r{background:var(--re2)}
 .st-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:5px}
 .st-note{font-size:10.5px}.cup{color:var(--gr)}.cdn{color:var(--re)}.cnm{color:var(--mu2)}
 .spark{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:9px}
 .sb{flex:1;border-radius:2px}.sb.g{background:rgba(15,186,129,.4)}.sb.b{background:rgba(0,212,255,.35)}.sb.r{background:rgba(240,68,68,.4)}
-
-/* GRID */
 .g2{display:grid;grid-template-columns:1fr 320px;gap:16px}
 .rcol{display:flex;flex-direction:column;gap:16px}
-
-/* TABLE */
 .tabs{display:flex;padding:0 17px;border-bottom:1px solid var(--b1);background:rgba(0,0,0,.1)}
 .tab{padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--mu2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
 .tab.active{color:var(--ac);border-bottom-color:var(--ac)}.tab:hover:not(.active){color:var(--tx)}
@@ -175,8 +144,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .hb{width:68px}.hbr{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:3px}.hbf{height:100%;border-radius:2px}
 .hpct{font-size:10px;font-family:'JetBrains Mono',monospace}
 .mono{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mu2)}
-
-/* CONN */
 .connp{padding:16px}
 .cstat{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
 .cstat.ok{color:var(--gr)}.cstat.er{color:var(--re)}.cstat.idle{color:var(--mu2)}
@@ -186,39 +153,30 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .wh-url-box{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 11px;margin-top:10px;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--ac);word-break:break-all;cursor:pointer;transition:background .15s}
 .wh-url-box:hover{background:var(--s3)}
 .wh-lbl{font-size:9px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
-
-/* LOG */
 .ll{max-height:260px;overflow-y:auto}
 .ll::-webkit-scrollbar{width:3px}.ll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
-.li{display:flex;align-items:flex-start;gap:9px;padding:9px 15px;border-bottom:1px solid rgba(255,255,255,.022);animation:up .3s ease both}
+.li{display:flex;align-items:flex-start;gap:9px;padding:9px 15px;border-bottom:1px solid rgba(255,255,255,.022)}
 .li:last-child{border-bottom:none}
-.lic{font-size:12px;flex-shrink:0;margin-top:1px}
-.lib{flex:1;min-width:0}.lit{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lic{font-size:12px;flex-shrink:0;margin-top:1px}.lib{flex:1;min-width:0}
+.lit{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lis{font-size:10px;color:var(--mu2);margin-top:1px;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ltime{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
-
-/* HEALTH */
 .hl{padding:13px 15px;display:flex;flex-direction:column;gap:10px}
 .hr{display:flex;flex-direction:column;gap:4px}.hr-top{display:flex;justify-content:space-between;font-size:11.5px}
 .hr-n{font-weight:600}.hr-v{font-family:'JetBrains Mono',monospace;font-size:10.5px}
 .hr-t{height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
 .hr-f{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
-
-/* BOTTOM */
 .b2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .act{display:flex;align-items:flex-end;gap:4px;height:68px;padding:12px 17px}
 .ac{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
 .acw{flex:1;display:flex;align-items:flex-end;width:100%}
-.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(0,212,255,.5),rgba(0,212,255,.13));transition:all .3s;cursor:pointer;min-height:3px}
-.acb:hover{background:linear-gradient(180deg,var(--ac),rgba(0,212,255,.3))}
+.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(0,212,255,.5),rgba(0,212,255,.13));min-height:3px}
 .acl{font-size:8.5px;color:var(--mu);font-family:'JetBrains Mono',monospace}
 .el{padding:11px 15px;display:flex;flex-direction:column;gap:8px}
 .ei{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:var(--re2);border:1px solid rgba(240,68,68,.1)}
 .edot{width:6px;height:6px;border-radius:50%;background:var(--re);margin-top:3px;flex-shrink:0}
 .eb{flex:1;min-width:0}.en{font-size:11.5px;font-weight:600}.em{font-size:10px;color:var(--mu2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .et{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
-
-/* WF GRID */
 .wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
 .wf-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:16px;transition:border-color .2s,transform .2s}
 .wf-card:hover{border-color:var(--b2);transform:translateY(-2px)}
@@ -230,15 +188,10 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .wf-stat-lbl{font-size:9px;color:var(--mu2);text-transform:uppercase;letter-spacing:.6px}
 .wf-hbar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:10px}
 .wf-hbar-fill{height:100%;border-radius:2px;transition:width .8s}
-
-/* EXEC FILTERS */
 .exec-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .filter-btn{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s2);color:var(--mu2);transition:all .15s;font-family:'Syne',sans-serif}
 .filter-btn.active{background:var(--ac2);border-color:rgba(0,212,255,.3);color:var(--ac)}
-.filter-btn:hover:not(.active){color:var(--tx);border-color:var(--b2)}
-
-/* HEALTH PAGE */
-.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:16px}
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
 .health-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:18px}
 .health-card-name{font-size:13px;font-weight:700;margin-bottom:14px}
 .health-big-score{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:4px}
@@ -249,21 +202,17 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .health-bar-name{color:var(--mu2)}.health-bar-val{font-family:'JetBrains Mono',monospace;font-size:10px}
 .health-bar-track{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
 .health-bar-fill{height:100%;border-radius:2px;transition:width .8s}
-
-/* ALERTS PAGE */
 .alert-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1)}
 .alert-item:last-child{border-bottom:none}
 .alert-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.alert-ico.er{background:var(--re2)}.alert-ico.ok{background:var(--gr2)}
+.alert-ico.er{background:var(--re2)}
 .alert-body{flex:1}.alert-title{font-size:12.5px;font-weight:600}.alert-msg{font-size:11px;color:var(--mu2);margin-top:3px}
 .alert-meta{display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--mu)}
-
-/* ANALYTICS */
 .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .big-chart{display:flex;align-items:flex-end;gap:5px;height:100px;padding:16px 17px 12px}
 .bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
 .bcw{flex:1;display:flex;align-items:flex-end;width:100%}
-.bcb{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height .5s}
+.bcb{width:100%;border-radius:3px 3px 0 0;min-height:3px}
 .bcl{font-size:8px;color:var(--mu);font-family:'JetBrains Mono',monospace}
 .analytics-stat{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:18px}
 .analytics-stat-val{font-size:26px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
@@ -274,8 +223,6 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .top-rank{width:20px;height:20px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--mu2);flex-shrink:0}
 .top-rank.gold{background:rgba(245,158,11,.15);color:var(--ye)}
 .top-name{flex:1;font-size:12px;font-weight:600}.top-val{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mu2)}
-
-/* SETTINGS */
 .settings-section{margin-bottom:20px}
 .settings-title{font-size:11px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.9px;margin-bottom:10px;padding:0 2px}
 .settings-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;overflow:hidden}
@@ -284,41 +231,35 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 .settings-row-left{display:flex;flex-direction:column;gap:3px}
 .settings-row-name{font-size:12.5px;font-weight:600}.settings-row-desc{font-size:11px;color:var(--mu2)}
 .settings-val{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ac)}
-.toggle{width:36px;height:20px;border-radius:10px;background:var(--s3);position:relative;cursor:pointer;transition:background .2s;border:1px solid var(--b2)}
-.toggle.on{background:var(--gr)}.toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s}
-.toggle.on .toggle-knob{transform:translateX(16px)}
-
-/* ALERT BANNER */
 .talert{background:var(--re2);border:1px solid rgba(240,68,68,.2);border-radius:9px;padding:10px 15px;display:flex;align-items:center;gap:9px;font-size:12.5px;margin-bottom:16px}
 .talert b{color:var(--re)}.talert-x{cursor:pointer;color:var(--mu);font-size:17px;line-height:1;margin-left:auto}
-
-/* EMPTY */
 .empty{padding:28px;text-align:center;color:var(--mu2);font-size:12.5px}
 .empty-i{font-size:26px;margin-bottom:7px}
-
-/* MODAL */
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .mbg.open{opacity:1;pointer-events:all}
 .modal{background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:440px;max-width:95vw;transform:scale(.95);transition:transform .2s}
 .mbg.open .modal{transform:scale(1)}
 .mh{font-size:15px;font-weight:800;margin-bottom:4px}.ms{font-size:12px;color:var(--mu2);margin-bottom:18px}
 .mac{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
-
-/* TOAST */
 .tw{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:9998}
 .toast{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:10px 13px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;min-width:210px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
 @keyframes toastIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 .toast.ok{border-color:rgba(15,186,129,.28)}.toast.er{border-color:rgba(240,68,68,.28)}.toast.in{border-color:rgba(0,212,255,.28)}
-.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.15);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 @media(max-width:1080px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.analytics-grid{grid-template-columns:1fr}}
-@media(max-width:680px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.rbar{left:0}.stats{grid-template-columns:1fr}.b2{grid-template-columns:1fr}}
+@media(max-width:680px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats{grid-template-columns:1fr}.b2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 
-<!-- ══ SIGNUP PAGE ══════════════════════════════════════ -->
+<!-- LOADING -->
+<div id="loadingPage">
+  <div class="load-icon">⚡</div>
+  <div class="load-text">Loading FlowPulse…</div>
+</div>
+
+<!-- SIGNUP -->
 <div id="signupPage" style="display:none">
   <div class="auth-bg"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div></div>
   <div class="auth-wrap">
@@ -330,47 +271,47 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       <div class="step-indicator">
         <div class="step"><div class="step-dot active" id="sd1">1</div><div class="step-label active">Account</div></div>
         <div class="step-line"></div>
-        <div class="step"><div class="step-dot" id="sd2">2</div><div class="step-label" id="sl2">Connect n8n</div></div>
+        <div class="step"><div class="step-dot" id="sd2">2</div><div class="step-label">Connect n8n</div></div>
         <div class="step-line"></div>
-        <div class="step"><div class="step-dot" id="sd3">3</div><div class="step-label" id="sl3">Done</div></div>
+        <div class="step"><div class="step-dot" id="sd3">3</div><div class="step-label">Done</div></div>
       </div>
 
-      <!-- STEP 1: Account -->
-      <div id="signup-step1">
+      <!-- Step 1 -->
+      <div id="su-s1">
         <div class="auth-card-title">Create your account</div>
-        <div class="auth-card-sub">Join FlowPulse to monitor all your n8n automations in one place.</div>
-        <div class="fg"><div class="fl">Full Name</div><div class="fi-wrap"><input class="fi" type="text" id="su-name" placeholder="Your name"/></div></div>
-        <div class="fg"><div class="fl">Email Address</div><div class="fi-wrap"><input class="fi" type="email" id="su-email" placeholder="you@company.com"/></div></div>
+        <div class="auth-card-sub">Your account is securely stored in our database — access from any device, anywhere.</div>
+        <div class="fg"><div class="fl">Full Name</div><input class="fi" type="text" id="su-name" placeholder="Your name"/></div>
+        <div class="fg"><div class="fl">Email Address</div><input class="fi" type="email" id="su-email" placeholder="you@company.com"/></div>
         <div class="fg">
           <div class="fl">Password</div>
-          <div class="fi-wrap"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkPassStrength(this.value)"/><span class="fi-icon" onclick="togglePw('su-pass',this)">👁</span></div>
+          <div class="fi-wrap"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this.value)"/><span class="fi-icon" onclick="togglePw('su-pass',this)">👁</span></div>
           <div class="fi-hint" id="passHint">Enter a password</div>
         </div>
         <div class="fg"><div class="fl">Confirm Password</div><div class="fi-wrap"><input class="fi" type="password" id="su-pass2" placeholder="Repeat password"/><span class="fi-icon" onclick="togglePw('su-pass2',this)">👁</span></div></div>
-        <button class="auth-btn" onclick="signupStep1()">Continue →</button>
+        <button class="auth-btn" id="su-btn1" onclick="suStep1()">Continue →</button>
         <div class="auth-err" id="su-err1"></div>
       </div>
 
-      <!-- STEP 2: Connect n8n -->
-      <div id="signup-step2" style="display:none">
+      <!-- Step 2 -->
+      <div id="su-s2" style="display:none">
         <div class="auth-card-title">Connect your n8n</div>
-        <div class="auth-card-sub">Enter your Cloudflare Worker URL. This is saved permanently to your account — you'll never need to enter it again.</div>
+        <div class="auth-card-sub">Enter your Cloudflare Worker URL. Saved permanently to your account in Supabase — never ask again.</div>
         <div class="fg">
           <div class="fl">Cloudflare Worker URL</div>
-          <div class="fi-wrap"><input class="fi" type="text" id="su-worker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
-          <div class="fi-hint">From your Cloudflare Workers dashboard. Paste it here and it's saved forever.</div>
+          <input class="fi" type="text" id="su-worker" placeholder="https://flowpulse.yourname.workers.dev"/>
+          <div class="fi-hint">From your Cloudflare Workers dashboard. Saved once, works forever.</div>
         </div>
-        <button class="auth-btn" onclick="signupStep2()">Verify & Save →</button>
-        <button class="auth-btn secondary" onclick="signupSkipWorker()">Skip for now →</button>
+        <button class="auth-btn" id="su-btn2" onclick="suStep2()">Verify & Save →</button>
+        <button class="auth-btn secondary" onclick="suSkip()">Skip for now →</button>
         <div class="auth-err" id="su-err2"></div>
       </div>
 
-      <!-- STEP 3: Done -->
-      <div id="signup-step3" style="display:none;text-align:center">
-        <div style="font-size:48px;margin-bottom:16px">🎉</div>
+      <!-- Step 3 -->
+      <div id="su-s3" style="display:none;text-align:center">
+        <div style="font-size:52px;margin-bottom:16px">🎉</div>
         <div class="auth-card-title" style="text-align:center">You're all set!</div>
-        <div class="auth-card-sub" style="text-align:center;margin-bottom:24px">Your FlowPulse account is ready. Your Cloudflare Worker URL is saved — you'll never need to enter it again.</div>
-        <button class="auth-btn" onclick="goToDashboard()">Open Dashboard →</button>
+        <div class="auth-card-sub" style="text-align:center;margin-bottom:24px">Account created in Supabase. Your Worker URL is saved — log in from any device and it loads automatically.</div>
+        <button class="auth-btn" onclick="goApp()">Open Dashboard →</button>
       </div>
 
       <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
@@ -378,7 +319,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
   </div>
 </div>
 
-<!-- ══ LOGIN PAGE ════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="loginPage" style="display:none">
   <div class="auth-bg"><div class="orb a"></div><div class="orb b"></div></div>
   <div class="auth-wrap">
@@ -388,25 +329,21 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     </div>
     <div class="auth-card">
       <div class="auth-card-title">Welcome back</div>
-      <div class="auth-card-sub">Sign in to your FlowPulse account. Your n8n connection will load automatically.</div>
-      <div class="fg"><div class="fl">Email Address</div><div class="fi-wrap"><input class="fi" type="email" id="li-email" placeholder="you@company.com"/></div></div>
+      <div class="auth-card-sub">Sign in to your FlowPulse account. Your Worker URL loads automatically from Supabase.</div>
+      <div class="fg"><div class="fl">Email Address</div><input class="fi" type="email" id="li-email" placeholder="you@company.com"/></div>
       <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="li-pass" placeholder="Your password"/><span class="fi-icon" onclick="togglePw('li-pass',this)">👁</span></div></div>
-      <button class="auth-btn" id="liBtn" onclick="doLogin()">Sign In →</button>
+      <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign In →</button>
       <div class="auth-err" id="li-err"></div>
       <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Sign up free</a></div>
     </div>
   </div>
 </div>
 
-<!-- ══ APP PAGE ══════════════════════════════════════════ -->
+<!-- APP -->
 <div id="appPage">
   <div class="rbar" id="rbar"></div>
   <aside class="sidebar">
-    <div class="slogo">
-      <div class="slogo-icon">⚡</div>
-      <div class="slogo-text">Flow<span>Pulse</span></div>
-      <span class="sbadge">LIVE</span>
-    </div>
+    <div class="slogo"><div class="slogo-icon">⚡</div><div class="slogo-text">Flow<span>Pulse</span></div><span class="sbadge">LIVE</span></div>
     <nav class="snav">
       <div class="snav-sec">Overview</div>
       <div class="ni active" onclick="navTo('dashboard',this)"><span class="ic">⬡</span>Dashboard</div>
@@ -450,7 +387,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
       </div>
       <div class="g2">
         <div class="card card-last">
-          <div class="ch"><div class="ct">Workflow Executions</div><div class="cm"><span id="lastUp">—</span><span id="wfCnt" style="color:var(--ac);font-weight:700"></span></div></div>
+          <div class="ch"><div class="ct">Workflow Executions</div><div class="cm"><span id="lastUp">—</span>&nbsp;<span id="wfCnt" style="color:var(--ac);font-weight:700"></span></div></div>
           <div class="tabs"><div class="tab active" onclick="setTab(this,'all')">All</div><div class="tab" onclick="setTab(this,'success')">Success</div><div class="tab" onclick="setTab(this,'error')">Errors</div></div>
           <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Health</th><th>Duration</th><th>Items</th><th>Last Run</th></tr></thead><tbody id="wfBody"></tbody></table></div>
         </div>
@@ -460,7 +397,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
             <div class="connp">
               <div class="curl" id="curl">No worker configured</div>
               <div class="wh-lbl" style="margin-top:12px">Your n8n Webhook URL</div>
-              <div class="wh-url-box" id="whUrlBox" onclick="copyWebhook()" title="Click to copy">Configure worker URL first →</div>
+              <div class="wh-url-box" id="whUrlBox" onclick="copyWebhook()">Configure worker URL first →</div>
               <div style="font-size:10px;color:var(--mu2);margin-top:6px">↑ Paste this in your n8n HTTP Request node</div>
               <div style="margin-top:10px;display:flex;gap:7px">
                 <button class="btn" style="flex:1;justify-content:center" onclick="navTo('settings',null)">⚙ Settings</button>
@@ -481,7 +418,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
     <!-- WORKFLOWS -->
     <div class="page" id="page-workflows">
       <div class="ch" style="background:var(--s1);border:1px solid var(--b1);border-radius:11px;margin-bottom:16px;padding:15px 17px"><div class="ct">All Workflows</div><div class="cm"><span id="wfPageCount" style="color:var(--ac);font-weight:700"></span></div></div>
-      <div class="wf-grid" id="wfGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting for data…</div></div>
+      <div class="wf-grid" id="wfGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div></div>
     </div>
 
     <!-- EXECUTIONS -->
@@ -497,7 +434,7 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 
     <!-- ALERTS -->
     <div class="page" id="page-alerts">
-      <div class="card card-last"><div class="ch"><div class="ct">Active Alerts</div><div class="cm" id="alertsCount"></div></div><div id="alertsList"><div class="empty"><div class="empty-i">✅</div>No active alerts</div></div></div>
+      <div class="card card-last"><div class="ch"><div class="ct">Active Alerts</div><div class="cm" id="alertsCount"></div></div><div id="alertsList"><div class="empty"><div class="empty-i">✅</div>No alerts</div></div></div>
     </div>
 
     <!-- ANALYTICS -->
@@ -511,33 +448,34 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
         </div>
       </div>
       <div class="b2">
-        <div class="card card-last"><div class="ch"><div class="ct">Most Active</div><div class="cm">by executions</div></div><div class="top-list" id="topActive"></div></div>
-        <div class="card card-last"><div class="ch"><div class="ct">Most Reliable</div><div class="cm">by success rate</div></div><div class="top-list" id="topReliable"></div></div>
+        <div class="card card-last"><div class="ch"><div class="ct">Most Active</div></div><div class="top-list" id="topActive"></div></div>
+        <div class="card card-last"><div class="ch"><div class="ct">Most Reliable</div></div><div class="top-list" id="topReliable"></div></div>
       </div>
     </div>
 
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="settings-section">
-        <div class="settings-title">Account</div>
+        <div class="settings-title">Account — Stored in Supabase ☁️</div>
         <div class="settings-card">
           <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Name</div></div><div class="settings-val" id="set-name">—</div></div>
           <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Email</div></div><div class="settings-val" id="set-email">—</div></div>
-          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name" style="color:var(--re)">Sign Out</div><div class="settings-row-desc">Return to login screen</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="logout()">Sign Out</button></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">User ID</div><div class="settings-row-desc">Supabase Auth UUID</div></div><div class="settings-val" id="set-uid" style="font-size:10px">—</div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Sign Out</div><div class="settings-row-desc">Clears session from this device only</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="logout()">Sign Out</button></div>
         </div>
       </div>
       <div class="settings-section">
-        <div class="settings-title">n8n Connection</div>
+        <div class="settings-title">n8n Connection — Saved in Supabase ☁️</div>
         <div class="settings-card">
-          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Worker URL</div><div class="settings-row-desc">Your Cloudflare proxy URL</div></div><div style="display:flex;gap:8px;align-items:center"><div class="settings-val" id="set-worker">Not set</div><button class="btn" onclick="showModal()">Edit</button></div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Worker URL</div><div class="settings-row-desc">Cloudflare proxy — saved to your Supabase profile</div></div><div style="display:flex;gap:8px;align-items:center"><div class="settings-val" id="set-worker">Not set</div><button class="btn" onclick="showModal()">Edit</button></div></div>
           <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Webhook URL</div><div class="settings-row-desc">Paste in your n8n HTTP Request node</div></div><button class="btn" onclick="copyWebhook()">📋 Copy</button></div>
-          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Connection Status</div></div><div class="cstat idle" id="settingsConnStat"><div class="cdot idle" id="settingsConnDot"></div><span id="settingsConnTxt">Idle</span></div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Status</div></div><div class="cstat idle" id="settingsConnStat"><div class="cdot idle" id="settingsConnDot"></div><span id="settingsConnTxt">Idle</span></div></div>
         </div>
       </div>
       <div class="settings-section">
         <div class="settings-title">Data</div>
         <div class="settings-card">
-          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Clear All Data</div><div class="settings-row-desc">Delete all execution records from KV</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="clearData()">Clear</button></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Clear Execution Data</div><div class="settings-row-desc">Deletes all records from Cloudflare KV</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="clearData()">Clear</button></div>
         </div>
       </div>
     </div>
@@ -549,9 +487,9 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 <div class="mbg" id="modal" onclick="closeModalOut(event)">
   <div class="modal">
     <div class="mh">⚡ Update Worker URL</div>
-    <div class="ms">This URL is saved permanently to your account.</div>
+    <div class="ms">Saved permanently to your Supabase profile. Works on any device.</div>
     <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" type="text" id="mWorker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
-    <div class="mac"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-p" onclick="saveWorkerUrl()">Save Permanently →</button></div>
+    <div class="mac"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-p" id="mSaveBtn" onclick="saveWorkerUrl()">Save to Supabase →</button></div>
   </div>
 </div>
 
@@ -559,195 +497,165 @@ body::after{content:'';position:fixed;inset:0;background-image:url("data:image/s
 
 <script>
 // ═══════════════════════════════════════════════════════
-// ACCOUNT STORAGE — localStorage (permanent, per browser)
-// Each user account stored as: fp_user_<email>
-// Current session: fp_session
+// SUPABASE INIT
 // ═══════════════════════════════════════════════════════
-
-function getAccounts() {
-  try { return JSON.parse(localStorage.getItem('fp_accounts') || '{}'); } catch { return {}; }
-}
-function saveAccounts(accounts) {
-  localStorage.setItem('fp_accounts', JSON.stringify(accounts));
-}
-function getAccount(email) {
-  return getAccounts()[email.toLowerCase()] || null;
-}
-function saveAccount(account) {
-  const accounts = getAccounts();
-  accounts[account.email.toLowerCase()] = account;
-  saveAccounts(accounts);
-}
-function getCurrentSession() {
-  try { return JSON.parse(localStorage.getItem('fp_session') || 'null'); } catch { return null; }
-}
-function saveSession(email) {
-  localStorage.setItem('fp_session', JSON.stringify({ email, ts: Date.now() }));
-}
-function clearSession() {
-  localStorage.removeItem('fp_session');
-}
+const SUPABASE_URL  = 'https://haszbfvjlxkwrrqfgqum.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3piZnZqbHhrd3JycWZncXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTgxMzEsImV4cCI6MjA4ODU3NDEzMX0.-60WLt-U37aext9eKlOhnYbH0fuHmexIdLMzMvyZMjs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 // ═══════════════════════════════════════════════════════
-// APP STATE
+// STATE
 // ═══════════════════════════════════════════════════════
 const S = {
-  user: null,        // full account object
+  user: null,        // Supabase auth user
+  profile: null,     // profiles table row
   executions: [],
   tab: 'all', execFilter: 'all', searchQ: '',
   timer: null, currentPage: 'dashboard',
-  signupData: {},    // temp during signup
+  suTemp: {},        // temp during signup
 };
 
 // ═══════════════════════════════════════════════════════
-// ROUTING — show correct page on load
+// INIT — check existing Supabase session
 // ═══════════════════════════════════════════════════════
-function init() {
-  const session = getCurrentSession();
-  if (session) {
-    const account = getAccount(session.email);
-    if (account) { S.user = account; showApp(); return; }
-  }
-  // check if any accounts exist
-  const accounts = getAccounts();
-  if (Object.keys(accounts).length === 0) {
-    showSignup();
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    S.user = session.user;
+    await loadProfile();
+    hide('loadingPage');
+    showApp();
   } else {
+    hide('loadingPage');
     showLogin();
   }
 }
 
-function showSignup() {
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appPage').style.display = 'none';
-  document.getElementById('signupPage').style.display = 'block';
-  resetSignupSteps();
-}
-function showLogin() {
-  document.getElementById('signupPage').style.display = 'none';
-  document.getElementById('appPage').style.display = 'none';
-  document.getElementById('loginPage').style.display = 'block';
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', S.user.id).single();
+  S.profile = data || {};
 }
 
 // ═══════════════════════════════════════════════════════
-// SIGNUP FLOW
+// ROUTING
 // ═══════════════════════════════════════════════════════
-function resetSignupSteps() {
-  document.getElementById('signup-step1').style.display = 'block';
-  document.getElementById('signup-step2').style.display = 'none';
-  document.getElementById('signup-step3').style.display = 'none';
-  setStep(1);
+function showLogin()  { hide('signupPage'); hide('appPage'); show('loginPage'); }
+function showSignup() { hide('loginPage');  hide('appPage'); show('signupPage'); resetSignup(); }
+function goApp()      { hide('signupPage'); hide('loginPage'); showApp(); }
+
+// ═══════════════════════════════════════════════════════
+// SIGNUP — 3 steps
+// ═══════════════════════════════════════════════════════
+function resetSignup() {
+  show('su-s1'); hide('su-s2'); hide('su-s3'); setStep(1);
+  document.getElementById('su-name').value='';
+  document.getElementById('su-email').value='';
+  document.getElementById('su-pass').value='';
+  document.getElementById('su-pass2').value='';
+  document.getElementById('su-err1').style.display='none';
 }
 
 function setStep(n) {
-  [1,2,3].forEach(i => {
-    const dot = document.getElementById('sd'+i);
-    if (i < n) { dot.textContent = '✓'; dot.className = 'step-dot done'; }
-    else if (i === n) { dot.textContent = i; dot.className = 'step-dot active'; }
-    else { dot.textContent = i; dot.className = 'step-dot'; }
+  [1,2,3].forEach(i=>{
+    const d=document.getElementById('sd'+i);
+    if(i<n){d.textContent='✓';d.className='step-dot done';}
+    else if(i===n){d.textContent=i;d.className='step-dot active';}
+    else{d.textContent=i;d.className='step-dot';}
   });
 }
 
-function checkPassStrength(val) {
-  const hint = document.getElementById('passHint');
-  if (!val) { hint.textContent = 'Enter a password'; hint.className = 'fi-hint'; return; }
-  if (val.length < 6) { hint.textContent = 'Too short'; hint.className = 'fi-hint er'; return; }
-  if (val.length < 8) { hint.textContent = 'Weak — try longer'; hint.className = 'fi-hint er'; return; }
-  if (!/[A-Z]/.test(val) || !/[0-9]/.test(val)) { hint.textContent = 'Medium — add numbers & capitals'; hint.className = 'fi-hint'; return; }
-  hint.textContent = '✓ Strong password'; hint.className = 'fi-hint ok';
+function checkStrength(v) {
+  const h=document.getElementById('passHint');
+  if(!v){h.textContent='Enter a password';h.className='fi-hint';return;}
+  if(v.length<8){h.textContent='Too short — need 8+';h.className='fi-hint er';return;}
+  if(!/[A-Z]/.test(v)||!/[0-9]/.test(v)){h.textContent='Medium — add capitals & numbers';h.className='fi-hint';return;}
+  h.textContent='✓ Strong password';h.className='fi-hint ok';
 }
 
-function signupStep1() {
+async function suStep1() {
   const name  = document.getElementById('su-name').value.trim();
-  const email = document.getElementById('su-email').value.trim().toLowerCase();
+  const email = document.getElementById('su-email').value.trim();
   const pass  = document.getElementById('su-pass').value;
   const pass2 = document.getElementById('su-pass2').value;
-  const errEl = document.getElementById('su-err1');
-  errEl.style.display = 'none';
+  errHide('su-err1');
 
-  if (!name)              return showErr('su-err1', 'Please enter your name.');
-  if (!email || !email.includes('@')) return showErr('su-err1', 'Please enter a valid email.');
-  if (pass.length < 8)   return showErr('su-err1', 'Password must be at least 8 characters.');
-  if (pass !== pass2)    return showErr('su-err1', 'Passwords do not match.');
-  if (getAccount(email)) return showErr('su-err1', 'An account with this email already exists. Sign in instead.');
+  if (!name)   return errShow('su-err1','Enter your name.');
+  if (!email || !email.includes('@')) return errShow('su-err1','Enter a valid email.');
+  if (pass.length < 8) return errShow('su-err1','Password must be 8+ characters.');
+  if (pass !== pass2)  return errShow('su-err1','Passwords do not match.');
 
-  // Save temp signup data
-  S.signupData = { name, email, pass: btoa(pass) }; // basic encoding (not for prod auth)
+  const btn = document.getElementById('su-btn1');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Creating account…';
+
+  // Supabase signup
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  btn.disabled=false; btn.innerHTML='Continue →';
+
+  if (error) return errShow('su-err1', error.message);
+
+  S.user = data.user;
+  S.suTemp = { name };
+
+  // Save name to profile immediately
+  await sb.from('profiles').upsert({ id: S.user.id, name, worker_url: '' });
+  await loadProfile();
 
   // Go to step 2
-  document.getElementById('signup-step1').style.display = 'none';
-  document.getElementById('signup-step2').style.display = 'block';
-  setStep(2);
+  hide('su-s1'); show('su-s2'); setStep(2);
 }
 
-async function signupStep2() {
+async function suStep2() {
   const worker = document.getElementById('su-worker').value.trim().replace(/\/$/,'');
-  if (!worker) return showErr('su-err2', 'Please enter your Cloudflare Worker URL.');
-  if (!worker.startsWith('http')) return showErr('su-err2', 'URL must start with https://');
+  if (!worker) return errShow('su-err2','Enter your Cloudflare Worker URL.');
+  if (!worker.startsWith('http')) return errShow('su-err2','URL must start with https://');
 
-  // Verify connection
-  const btn = document.querySelector('#signup-step2 .auth-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Verifying…';
+  const btn = document.getElementById('su-btn2');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Verifying connection…';
+
   try {
     const res = await fetch(worker + '/ping');
     const data = await res.json();
-    if (!data.ok) throw new Error('Worker not responding correctly');
+    if (!data.ok) throw new Error('Worker not responding');
   } catch(e) {
-    btn.disabled = false; btn.innerHTML = 'Verify & Save →';
-    return showErr('su-err2', 'Could not connect to Worker. Check the URL and make sure it is deployed.');
+    btn.disabled=false; btn.innerHTML='Verify & Save →';
+    return errShow('su-err2','Cannot reach Worker. Check URL and make sure it is deployed.');
   }
 
-  // Save account
-  const account = { ...S.signupData, workerUrl: worker, createdAt: new Date().toISOString() };
-  saveAccount(account);
-  S.user = account;
-  saveSession(account.email);
+  // Save worker_url to Supabase profile
+  const { error } = await sb.from('profiles').upsert({ id: S.user.id, name: S.suTemp.name, worker_url: worker });
+  btn.disabled=false; btn.innerHTML='Verify & Save →';
 
-  // Step 3
-  document.getElementById('signup-step2').style.display = 'none';
-  document.getElementById('signup-step3').style.display = 'block';
-  setStep(3);
+  if (error) return errShow('su-err2', 'Saved locally but could not save to Supabase: ' + error.message);
+  await loadProfile();
+
+  hide('su-s2'); show('su-s3'); setStep(3);
 }
 
-function signupSkipWorker() {
-  const account = { ...S.signupData, workerUrl: '', createdAt: new Date().toISOString() };
-  saveAccount(account);
-  S.user = account;
-  saveSession(account.email);
-  document.getElementById('signup-step2').style.display = 'none';
-  document.getElementById('signup-step3').style.display = 'block';
-  setStep(3);
+async function suSkip() {
+  hide('su-s2'); show('su-s3'); setStep(3);
 }
-
-function goToDashboard() { showApp(); }
 
 // ═══════════════════════════════════════════════════════
 // LOGIN
 // ═══════════════════════════════════════════════════════
 async function doLogin() {
-  const email = document.getElementById('li-email').value.trim().toLowerCase();
+  const email = document.getElementById('li-email').value.trim();
   const pass  = document.getElementById('li-pass').value;
-  const btn   = document.getElementById('liBtn');
-  document.getElementById('li-err').style.display = 'none';
+  const btn   = document.getElementById('li-btn');
+  errHide('li-err');
 
-  if (!email || !email.includes('@')) return showErr('li-err', 'Enter a valid email.');
-  if (!pass) return showErr('li-err', 'Enter your password.');
+  if (!email || !email.includes('@')) return errShow('li-err','Enter a valid email.');
+  if (!pass) return errShow('li-err','Enter your password.');
 
-  btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Signing in…';
-  await sleep(600);
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Signing in…';
 
-  const account = getAccount(email);
-  if (!account) {
-    btn.disabled = false; btn.innerHTML = 'Sign In →';
-    return showErr('li-err', 'No account found with this email. Sign up first.');
-  }
-  if (account.pass !== btoa(pass)) {
-    btn.disabled = false; btn.innerHTML = 'Sign In →';
-    return showErr('li-err', 'Incorrect password. Please try again.');
-  }
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled=false; btn.innerHTML='Sign In →';
 
-  S.user = account;
-  saveSession(email);
+  if (error) return errShow('li-err', error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message);
+
+  S.user = data.user;
+  await loadProfile();
   showApp();
 }
 
@@ -755,98 +663,81 @@ async function doLogin() {
 // SHOW APP
 // ═══════════════════════════════════════════════════════
 function showApp() {
-  document.getElementById('signupPage').style.display = 'none';
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appPage').style.display = 'block';
+  hide('loginPage'); hide('signupPage');
+  show('appPage');
 
-  // Populate sidebar
-  const name = S.user.name || S.user.email.split('@')[0];
-  document.getElementById('sAva').textContent = name.slice(0,2).toUpperCase();
+  const name  = S.profile?.name || S.user?.email?.split('@')[0] || 'User';
+  const email = S.user?.email || '—';
+  const workerUrl = S.profile?.worker_url || '';
+
+  document.getElementById('sAva').textContent  = name.slice(0,2).toUpperCase();
   document.getElementById('sName').textContent = name;
-  document.getElementById('sEmail').textContent = S.user.email;
-
-  // Populate settings
-  document.getElementById('set-name').textContent = S.user.name || '—';
-  document.getElementById('set-email').textContent = S.user.email;
-  document.getElementById('set-worker').textContent = S.user.workerUrl || 'Not set';
-  document.getElementById('mWorker').value = S.user.workerUrl || '';
+  document.getElementById('sEmail').textContent= email;
+  document.getElementById('set-name').textContent   = name;
+  document.getElementById('set-email').textContent  = email;
+  document.getElementById('set-uid').textContent    = S.user?.id?.slice(0,18)+'…' || '—';
+  document.getElementById('set-worker').textContent = workerUrl || 'Not set';
+  document.getElementById('mWorker').value = workerUrl;
 
   updateConnUI();
 
-  if (S.user.workerUrl) {
+  if (workerUrl) {
     fetchData(true);
     startTimer();
   } else {
-    toast('Welcome! Add your Worker URL in Settings to start receiving data. ⚡', 'in');
+    toast('Welcome! Add your Worker URL in Account Settings to start. ⚡','in');
   }
 }
 
-function logout() {
-  clearSession();
+async function logout() {
+  await sb.auth.signOut();
   clearInterval(S.timer);
-  S.user = null; S.executions = [];
-  document.getElementById('appPage').style.display = 'none';
-  document.getElementById('liBtn').disabled = false;
-  document.getElementById('liBtn').innerHTML = 'Sign In →';
-  document.getElementById('li-email').value = '';
-  document.getElementById('li-pass').value = '';
+  S.user=null; S.profile=null; S.executions=[];
+  hide('appPage');
   showLogin();
 }
 
 // ═══════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════
-const pageTitles = {
-  dashboard:  'Dashboard <span class="sub">/ Live Overview</span>',
-  workflows:  'Workflows <span class="sub">/ All</span>',
-  executions: 'Executions <span class="sub">/ History</span>',
-  health:     'Health Scores <span class="sub">/ Overview</span>',
-  alerts:     'Alerts <span class="sub">/ Active</span>',
-  analytics:  'Analytics <span class="sub">/ Insights</span>',
-  settings:   'Settings <span class="sub">/ Account</span>',
-};
-function navTo(page, el) {
+const pageTitles={dashboard:'Dashboard <span class="sub">/ Live Overview</span>',workflows:'Workflows <span class="sub">/ All</span>',executions:'Executions <span class="sub">/ History</span>',health:'Health Scores <span class="sub">/ Overview</span>',alerts:'Alerts <span class="sub">/ Active</span>',analytics:'Analytics <span class="sub">/ Insights</span>',settings:'Settings <span class="sub">/ Account</span>'};
+
+function navTo(page,el){
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
-  if (el) el.classList.add('active');
+  if(el) el.classList.add('active');
   else document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  document.getElementById('pageTitle').innerHTML = pageTitles[page] || page;
-  S.currentPage = page;
+  document.getElementById('pageTitle').innerHTML=pageTitles[page]||page;
+  S.currentPage=page;
   renderPage(page);
 }
-function renderPage(p) {
-  if(p==='workflows')  renderWorkflowsPage();
-  if(p==='executions') renderExecutionsPage();
-  if(p==='health')     renderHealthPage();
-  if(p==='alerts')     renderAlertsPage();
-  if(p==='analytics')  renderAnalyticsPage();
-  if(p==='settings')   renderSettingsPage();
-}
+function renderPage(p){if(p==='workflows')renderWFPage();if(p==='executions')renderExecPage();if(p==='health')renderHealthPage();if(p==='alerts')renderAlertsPage();if(p==='analytics')renderAnalyticsPage();if(p==='settings')renderSettingsPage();}
 
 // ═══════════════════════════════════════════════════════
-// FETCH
+// FETCH DATA
 // ═══════════════════════════════════════════════════════
-async function fetchData(showBar=false) {
-  if (!S.user?.workerUrl) return;
-  if (showBar) animBar();
+async function fetchData(bar=false){
+  const w=S.profile?.worker_url;
+  if(!w) return;
+  if(bar) animBar();
   setConn('idle','Syncing…');
-  try {
-    const res = await fetch(S.user.workerUrl + '/executions');
-    const data = await res.json();
-    S.executions = data.executions || [];
+  try{
+    const res=await fetch(w+'/executions');
+    const data=await res.json();
+    S.executions=data.executions||[];
     setConn('ok','Connected');
-    document.getElementById('curl').textContent = S.user.workerUrl;
-    document.getElementById('lastUp').textContent = 'Updated just now';
+    document.getElementById('curl').textContent=w;
+    document.getElementById('lastUp').textContent='Updated just now';
     renderAll();
-    if (S.currentPage !== 'dashboard') renderPage(S.currentPage);
-  } catch(e) {
+    if(S.currentPage!=='dashboard') renderPage(S.currentPage);
+  }catch(e){
     setConn('er','Error: '+e.message);
     toast('Fetch failed — check Worker URL','er');
   }
 }
-function startTimer() { clearInterval(S.timer); S.timer = setInterval(()=>fetchData(true), 10000); }
-function animBar() { const b=document.getElementById('rbar');b.classList.remove('go','done');void b.offsetWidth;b.classList.add('go');setTimeout(()=>{b.classList.remove('go');b.classList.add('done');setTimeout(()=>b.classList.remove('done'),400);},9800); }
+function startTimer(){clearInterval(S.timer);S.timer=setInterval(()=>fetchData(),10000);}
+function animBar(){const b=document.getElementById('rbar');b.classList.remove('go','done');void b.offsetWidth;b.classList.add('go');setTimeout(()=>{b.classList.remove('go');b.classList.add('done');setTimeout(()=>b.classList.remove('done'),400);},9800);}
 
 // ═══════════════════════════════════════════════════════
 // RENDER
@@ -859,27 +750,24 @@ function renderStats(){
   const total=exs.length,succ=exs.filter(e=>e.status==='success').length,errs=exs.filter(e=>e.status==='error').length;
   const rate=total>0?Math.round((succ/total)*1000)/10:0;
   const today=exs.filter(e=>isToday(new Date(e.receivedAt))).length;
-  document.getElementById('sWf').textContent=names.length||'—';
-  document.getElementById('sEx').textContent=total?total.toLocaleString():'—';
+  set('sWf',names.length||'—');set('sEx',total?total.toLocaleString():'—');
   document.getElementById('sSr').innerHTML=total?`${rate}<span style="font-size:15px;color:var(--mu)">%</span>`:'—';
-  document.getElementById('sEr').textContent=errs||'—';
-  document.getElementById('sWfN').innerHTML=names.length?`<span class="cup">${names.length} unique</span>`:'<span class="cnm">No data yet</span>';
-  document.getElementById('sExN').innerHTML=today?`<span class="cup">↑ ${today} today</span>`:'<span class="cnm">No executions yet</span>';
-  document.getElementById('sSrN').innerHTML=rate>=90?'<span class="cup">↑ Healthy</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data yet</span>';
-  document.getElementById('sErN').innerHTML=errs>0?`<span class="cdn">↑ ${errs} failed</span>`:total?'<span class="cup">All clear</span>':'<span class="cnm">No data yet</span>';
-  document.getElementById('aBadge').textContent=errs;
-  if(errs>0){document.getElementById('talertTxt').innerHTML=`<b>${errs} execution${errs>1?'s':''} failed</b> — check Alerts page.`;document.getElementById('talert').style.display='flex';}
-  renderSpark('spWf',Array.from({length:7},(_,i)=>i<6?Math.random()*names.length*0.8+names.length*0.2:names.length),'b');
-  renderSpark('spEx',mkSpark(exs),'g');
-  renderSpark('spSr',[rate*.9,rate*.95,rate*.88,rate,rate*.97,rate*.93,rate],'g');
-  renderSpark('spEr',mkErrSpark(exs),'r');
+  set('sEr',errs||'—'); document.getElementById('sEr').style.color=errs?'var(--re)':'var(--tx)';
+  set('sWfN',names.length?`<span class="cup">${names.length} unique</span>`:'<span class="cnm">No data yet</span>');
+  set('sExN',today?`<span class="cup">↑ ${today} today</span>`:'<span class="cnm">No executions</span>');
+  set('sSrN',rate>=90?'<span class="cup">↑ Healthy</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data</span>');
+  set('sErN',errs>0?`<span class="cdn">↑ ${errs} failed</span>`:total?'<span class="cup">All clear</span>':'<span class="cnm">No data</span>');
+  set('aBadge',errs);
+  if(errs>0){set('talertTxt',`<b>${errs} execution${errs>1?'s':''} failed</b> — check Alerts.`);document.getElementById('talert').style.display='flex';}
+  spark('spWf',Array.from({length:7},(_,i)=>i<6?Math.random()*names.length*.8+names.length*.2:names.length),'b');
+  spark('spEx',mkSpark(exs),'g');spark('spSr',[rate*.9,rate*.95,rate*.88,rate,rate*.97,rate*.93,rate],'g');spark('spEr',mkErrSpark(exs),'r');
 }
-function renderSpark(id,vals,cls){const max=Math.max(...vals,1);document.getElementById(id).innerHTML=vals.map(v=>`<div class="sb ${cls}" style="height:${Math.max(8,(v/max)*100)}%"></div>`).join('');}
+function spark(id,vals,cls){const max=Math.max(...vals,1);set(id,vals.map(v=>`<div class="sb ${cls}" style="height:${Math.max(8,(v/max)*100)}%"></div>`).join(''));}
 function mkSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
 function mkErrSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>e.status==='error'&&new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
 
-function setTab(el,tab){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');S.tab=tab;renderWorkflows();}
-function handleSearch(){S.searchQ=document.getElementById('srch').value.toLowerCase();renderWorkflows();if(S.currentPage==='executions')renderExecutionsPage();}
+function setTab(el,t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');S.tab=t;renderWorkflows();}
+function handleSearch(){S.searchQ=document.getElementById('srch').value.toLowerCase();renderWorkflows();if(S.currentPage==='executions')renderExecPage();}
 
 function renderWorkflows(){
   const grouped=getGrouped();
@@ -887,74 +775,84 @@ function renderWorkflows(){
   if(S.searchQ) rows=rows.filter(r=>r.name.toLowerCase().includes(S.searchQ));
   if(S.tab==='success') rows=rows.filter(r=>r.last.status==='success');
   if(S.tab==='error') rows=rows.filter(r=>r.hasErr);
-  document.getElementById('wfCnt').textContent=rows.length+' workflows';
-  if(!rows.length){document.getElementById('wfBody').innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length?'🔍':'📡'}</div>${S.executions.length?'No match':'Waiting for webhooks…'}</div></td></tr>`;return;}
-  document.getElementById('wfBody').innerHTML=rows.map(r=>{const hColor=r.health>=80?'var(--gr)':r.health>=50?'var(--ye)':'var(--re)';const pc=r.last.status==='success'?'p-ok':r.last.status==='error'?'p-er':'p-mu';const pl=r.last.status==='success'?'Success':r.last.status==='error'?'Failed':'Unknown';const avgDur=Math.round(r.exs.reduce((a,e)=>a+(e.durationMs||0),0)/r.exs.length);const ti=r.exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);return`<tr><td><div class="wn"><div class="wn-m">${esc(r.name)}</div><div class="wn-s">${r.exs.length} execs</div></div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><div class="hb"><div class="hbr"><div class="hbf" style="width:${r.health}%;background:${hColor}"></div></div><div class="hpct" style="color:${hColor}">${r.health}%</div></div></td><td><span class="mono">${fmtDur(avgDur)}</span></td><td><span class="mono">${ti.toLocaleString()}</span></td><td><span class="mono">${timeAgo(new Date(r.last.receivedAt))}</span></td></tr>`;}).join('');
+  set('wfCnt',rows.length+' workflows');
+  if(!rows.length){set('wfBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length?'🔍':'📡'}</div>${S.executions.length?'No match':'Waiting for webhooks…'}</div></td></tr>`);return;}
+  set('wfBody',rows.map(r=>{const hColor=r.health>=80?'var(--gr)':r.health>=50?'var(--ye)':'var(--re)';const pc=r.last.status==='success'?'p-ok':r.last.status==='error'?'p-er':'p-mu';const pl=r.last.status==='success'?'Success':r.last.status==='error'?'Failed':'Unknown';const avg=Math.round(r.exs.reduce((a,e)=>a+(e.durationMs||0),0)/r.exs.length);const ti=r.exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);return`<tr><td><div class="wn"><div class="wn-m">${esc(r.name)}</div><div class="wn-s">${r.exs.length} execs</div></div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><div class="hb"><div class="hbr"><div class="hbf" style="width:${r.health}%;background:${hColor}"></div></div><div class="hpct" style="color:${hColor}">${r.health}%</div></div></td><td><span class="mono">${fmtDur(avg)}</span></td><td><span class="mono">${ti.toLocaleString()}</span></td><td><span class="mono">${timeAgo(new Date(r.last.receivedAt))}</span></td></tr>`;}).join(''));
 }
-function renderLog(){const exs=[...S.executions].slice(0,12);if(!exs.length){document.getElementById('logList').innerHTML='<div class="empty"><div class="empty-i">📋</div>Waiting…</div>';return;}document.getElementById('logList').innerHTML=exs.map((e,i)=>{const icon=e.status==='error'?'❌':e.status==='success'?'✅':'▶';const sub=e.status==='error'?(e.errorMessage||'Failed'):`${fmtDur(e.durationMs)} · ${e.itemsProcessed} items`;return`<div class="li" style="animation-delay:${i*.04}s"><div class="lic">${icon}</div><div class="lib"><div class="lit">${esc(e.workflowName)}</div><div class="lis">${esc(sub)}</div></div><div class="ltime">${timeAgo(new Date(e.receivedAt))}</div></div>`;}).join('');}
-function renderHealth(){const grouped=getGrouped();const rows=Object.entries(grouped).map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const score=Math.round((succ/exs.length)*100);return{name,score,color:score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)'};}).sort((a,b)=>a.score-b.score).slice(0,6);if(!rows.length){document.getElementById('healthList').innerHTML='<div class="empty"><div class="empty-i">❤️</div>No data</div>';return;}document.getElementById('healthList').innerHTML=rows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${h.color}">${h.score}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.score}%;background:${h.color}"></div></div></div>`).join('');}
-function renderActivity(){const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return S.executions.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);document.getElementById('actChart').innerHTML=days.map((d,i)=>`<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/max)*100)}%"></div></div><div class="acl">${d}</div></div>`).join('');}
-function renderErrors(){const errs=S.executions.filter(e=>e.status==='error').slice(0,5);document.getElementById('errCnt').textContent=errs.length?errs.length+' active':'';if(!errs.length){document.getElementById('errList').innerHTML='<div class="empty"><div class="empty-i">✅</div>No errors</div>';return;}document.getElementById('errList').innerHTML=errs.map(e=>`<div class="ei"><div class="edot"></div><div class="eb"><div class="en">${esc(e.workflowName)}</div><div class="em">${esc(e.failedNode?`[${e.failedNode}] ${e.errorMessage||''}`:e.errorMessage||'Unknown')}</div></div><div class="et">${timeAgo(new Date(e.receivedAt))}</div></div>`).join('');}
+function renderLog(){const exs=[...S.executions].slice(0,12);if(!exs.length){set('logList','<div class="empty"><div class="empty-i">📋</div>Waiting…</div>');return;}set('logList',exs.map((e,i)=>{const icon=e.status==='error'?'❌':'✅';const sub=e.status==='error'?(e.errorMessage||'Failed'):`${fmtDur(e.durationMs)} · ${e.itemsProcessed} items`;return`<div class="li"><div class="lic">${icon}</div><div class="lib"><div class="lit">${esc(e.workflowName)}</div><div class="lis">${esc(sub)}</div></div><div class="ltime">${timeAgo(new Date(e.receivedAt))}</div></div>`;}).join(''));}
+function renderHealth(){const g=getGrouped();const rows=Object.entries(g).map(([name,exs])=>{const s=exs.filter(e=>e.status==='success').length;const score=Math.round((s/exs.length)*100);return{name,score,color:score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)'};}).sort((a,b)=>a.score-b.score).slice(0,6);if(!rows.length){set('healthList','<div class="empty"><div class="empty-i">❤️</div>No data</div>');return;}set('healthList',rows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${h.color}">${h.score}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.score}%;background:${h.color}"></div></div></div>`).join(''));}
+function renderActivity(){const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return S.executions.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);set('actChart',days.map((d,i)=>`<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/max)*100)}%"></div></div><div class="acl">${d}</div></div>`).join(''));}
+function renderErrors(){const errs=S.executions.filter(e=>e.status==='error').slice(0,5);set('errCnt',errs.length?errs.length+' active':'');if(!errs.length){set('errList','<div class="empty"><div class="empty-i">✅</div>No errors</div>');return;}set('errList',errs.map(e=>`<div class="ei"><div class="edot"></div><div class="eb"><div class="en">${esc(e.workflowName)}</div><div class="em">${esc(e.errorMessage||'Unknown error')}</div></div><div class="et">${timeAgo(new Date(e.receivedAt))}</div></div>`).join(''));}
 
-// ── Other pages ──────────────────────────────────────────
-function renderWorkflowsPage(){const grouped=getGrouped();const entries=Object.entries(grouped);document.getElementById('wfPageCount').textContent=entries.length+' workflows';if(!entries.length){document.getElementById('wfGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div>';return;}document.getElementById('wfGrid').innerHTML=entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const health=Math.round((succ/exs.length)*100);const hColor=health>=80?'var(--gr)':health>=50?'var(--ye)':'var(--re)';const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];const ti=exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);const avgDur=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);const pc=last.status==='success'?'p-ok':last.status==='error'?'p-er':'p-mu';const pl=last.status==='success'?'Success':last.status==='error'?'Failed':'Unknown';return`<div class="wf-card"><div class="wf-card-top"><div><div class="wf-card-name">${esc(name)}</div><div class="wf-card-id">Last run ${timeAgo(new Date(last.receivedAt))}</div></div><span class="pill ${pc}"><span class="pd"></span>${pl}</span></div><div class="wf-card-stats"><div class="wf-stat"><div class="wf-stat-val">${exs.length}</div><div class="wf-stat-lbl">Executions</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--re)">${errs}</div><div class="wf-stat-lbl">Errors</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--ac)">${fmtDur(avgDur)}</div><div class="wf-stat-lbl">Avg Time</div></div></div><div class="wf-hbar"><div class="wf-hbar-fill" style="width:${health}%;background:${hColor}"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--mu2)"><span>Health: <b style="color:${hColor}">${health}%</b></span><span>${ti.toLocaleString()} items</span></div></div>`;}).join('');}
+function renderWFPage(){const g=getGrouped();const entries=Object.entries(g);set('wfPageCount',entries.length+' workflows');if(!entries.length){set('wfGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div>');return;}set('wfGrid',entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const health=Math.round((succ/exs.length)*100);const hColor=health>=80?'var(--gr)':health>=50?'var(--ye)':'var(--re)';const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];const ti=exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);const pc=last.status==='success'?'p-ok':last.status==='error'?'p-er':'p-mu';const pl=last.status==='success'?'Success':last.status==='error'?'Failed':'Unknown';return`<div class="wf-card"><div class="wf-card-top"><div><div class="wf-card-name">${esc(name)}</div><div class="wf-card-id">Last run ${timeAgo(new Date(last.receivedAt))}</div></div><span class="pill ${pc}"><span class="pd"></span>${pl}</span></div><div class="wf-card-stats"><div class="wf-stat"><div class="wf-stat-val">${exs.length}</div><div class="wf-stat-lbl">Executions</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--re)">${errs}</div><div class="wf-stat-lbl">Errors</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--ac)">${fmtDur(avg)}</div><div class="wf-stat-lbl">Avg Time</div></div></div><div class="wf-hbar"><div class="wf-hbar-fill" style="width:${health}%;background:${hColor}"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--mu2)"><span>Health: <b style="color:${hColor}">${health}%</b></span><span>${ti.toLocaleString()} items</span></div></div>`;}).join(''));}
 
-function setExecFilter(el,f){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.execFilter=f;renderExecutionsPage();}
-function renderExecutionsPage(){let exs=[...S.executions];if(S.execFilter==='success')exs=exs.filter(e=>e.status==='success');if(S.execFilter==='error')exs=exs.filter(e=>e.status==='error');if(S.searchQ)exs=exs.filter(e=>e.workflowName.toLowerCase().includes(S.searchQ));document.getElementById('execTotal').textContent=exs.length+' records';if(!exs.length){document.getElementById('execBody').innerHTML=`<tr><td colspan="6"><div class="empty"><div class="empty-i">📋</div>No executions found</div></td></tr>`;return;}document.getElementById('execBody').innerHTML=exs.map(e=>{const pc=e.status==='success'?'p-ok':e.status==='error'?'p-er':'p-mu';const pl=e.status==='success'?'Success':e.status==='error'?'Failed':'Unknown';return`<tr><td><div class="wn-m">${esc(e.workflowName)}</div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:140px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join('');}
+function setExecFilter(el,f){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.execFilter=f;renderExecPage();}
+function renderExecPage(){let exs=[...S.executions];if(S.execFilter==='success')exs=exs.filter(e=>e.status==='success');if(S.execFilter==='error')exs=exs.filter(e=>e.status==='error');if(S.searchQ)exs=exs.filter(e=>e.workflowName.toLowerCase().includes(S.searchQ));set('execTotal',exs.length+' records');if(!exs.length){set('execBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">📋</div>No executions</div></td></tr>`);return;}set('execBody',exs.map(e=>{const pc=e.status==='success'?'p-ok':e.status==='error'?'p-er':'p-mu';const pl=e.status==='success'?'Success':e.status==='error'?'Failed':'Unknown';return`<tr><td><div class="wn-m">${esc(e.workflowName)}</div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:140px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join(''));}
 
-function renderHealthPage(){const grouped=getGrouped();const entries=Object.entries(grouped);if(!entries.length){document.getElementById('healthGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data yet</div>';return;}document.getElementById('healthGrid').innerHTML=entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const score=Math.round((succ/exs.length)*100);const color=score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)';const avgDur=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);return`<div class="health-card"><div class="health-card-name">${esc(name)}</div><div class="health-big-score" style="color:${color}">${score}%</div><div class="health-sublbl">Health · ${exs.length} executions</div><div class="health-bars"><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Success Rate</span><span class="health-bar-val" style="color:var(--gr)">${score}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${score}%;background:var(--gr)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Error Rate</span><span class="health-bar-val" style="color:var(--re)">${Math.round((errs/exs.length)*100)}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${Math.round((errs/exs.length)*100)}%;background:var(--re)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Avg Duration</span><span class="health-bar-val">${fmtDur(avgDur)}</span></div></div></div></div>`;}).join('');}
+function renderHealthPage(){const g=getGrouped();const entries=Object.entries(g);if(!entries.length){set('healthGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data</div>');return;}set('healthGrid',entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const score=Math.round((succ/exs.length)*100);const color=score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)';const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);return`<div class="health-card"><div class="health-card-name">${esc(name)}</div><div class="health-big-score" style="color:${color}">${score}%</div><div class="health-sublbl">Health · ${exs.length} executions</div><div class="health-bars"><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Success Rate</span><span class="health-bar-val" style="color:var(--gr)">${score}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${score}%;background:var(--gr)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Error Rate</span><span class="health-bar-val" style="color:var(--re)">${Math.round((errs/exs.length)*100)}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${Math.round((errs/exs.length)*100)}%;background:var(--re)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Avg Duration</span><span class="health-bar-val">${fmtDur(avg)}</span></div></div></div></div>`;}).join(''));}
 
-function renderAlertsPage(){const errs=S.executions.filter(e=>e.status==='error');document.getElementById('alertsCount').textContent=errs.length?errs.length+' active':'All clear';if(!errs.length){document.getElementById('alertsList').innerHTML='<div class="empty"><div class="empty-i">✅</div>No alerts — all workflows healthy!</div>';return;}document.getElementById('alertsList').innerHTML=errs.map(e=>`<div class="alert-item"><div class="alert-ico er">❌</div><div class="alert-body"><div class="alert-title">${esc(e.workflowName)}</div><div class="alert-msg">${esc(e.failedNode?`Failed at: ${e.failedNode} — `:'')}${esc(e.errorMessage||'Execution failed')}</div><div class="alert-meta"><span>${timeAgo(new Date(e.receivedAt))}</span><span>·</span><span>${fmtDur(e.durationMs)}</span></div></div></div>`).join('');}
+function renderAlertsPage(){const errs=S.executions.filter(e=>e.status==='error');set('alertsCount',errs.length?errs.length+' active':'All clear');if(!errs.length){set('alertsList','<div class="empty"><div class="empty-i">✅</div>All workflows healthy!</div>');return;}set('alertsList',errs.map(e=>`<div class="alert-item"><div class="alert-ico er">❌</div><div class="alert-body"><div class="alert-title">${esc(e.workflowName)}</div><div class="alert-msg">${esc(e.failedNode?`Node: ${e.failedNode} — `:'')}${esc(e.errorMessage||'Execution failed')}</div><div class="alert-meta"><span>${timeAgo(new Date(e.receivedAt))}</span><span>·</span><span>${fmtDur(e.durationMs)}</span></div></div></div>`).join(''));}
 
-function renderAnalyticsPage(){const exs=S.executions;const total=exs.length;const succ=exs.filter(e=>e.status==='success').length;const rate=total>0?Math.round((succ/total)*1000)/10:0;const avgDur=total>0?Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/total):0;document.getElementById('an-total').textContent=total.toLocaleString();document.getElementById('an-rate').textContent=rate+'%';document.getElementById('an-avg').textContent=fmtDur(avgDur);const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);document.getElementById('bigChart').innerHTML=days.map((d,i)=>`<div class="bc"><div class="bcw"><div class="bcb" style="height:${Math.max(4,(counts[i]/max)*100)}%;background:linear-gradient(180deg,rgba(0,212,255,.6),rgba(0,212,255,.15))"></div></div><div class="bcl">${d}</div></div>`).join('');const grouped=getGrouped();const byCount=Object.entries(grouped).sort((a,b)=>b[1].length-a[1].length).slice(0,5);document.getElementById('topActive').innerHTML=byCount.length?byCount.map(([name,exs],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(name)}</div><div class="top-val">${exs.length} runs</div></div>`).join(''):'<div class="empty">No data</div>';const byRate=Object.entries(grouped).filter(([,e])=>e.length>=2).map(([name,exs])=>{const s=exs.filter(e=>e.status==='success').length;return[name,Math.round((s/exs.length)*100)];}).sort((a,b)=>b[1]-a[1]).slice(0,5);document.getElementById('topReliable').innerHTML=byRate.length?byRate.map(([name,r],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(name)}</div><div class="top-val" style="color:var(--gr)">${r}%</div></div>`).join(''):'<div class="empty">Need 2+ runs per workflow</div>';}
+function renderAnalyticsPage(){const exs=S.executions;const total=exs.length;const succ=exs.filter(e=>e.status==='success').length;const rate=total>0?Math.round((succ/total)*1000)/10:0;const avg=total>0?Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/total):0;set('an-total',total.toLocaleString());set('an-rate',rate+'%');set('an-avg',fmtDur(avg));const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);set('bigChart',days.map((d,i)=>`<div class="bc"><div class="bcw"><div class="bcb" style="height:${Math.max(4,(counts[i]/max)*100)}%;background:linear-gradient(180deg,rgba(0,212,255,.6),rgba(0,212,255,.15))"></div></div><div class="bcl">${d}</div></div>`).join(''));const g=getGrouped();const byC=Object.entries(g).sort((a,b)=>b[1].length-a[1].length).slice(0,5);set('topActive',byC.length?byC.map(([n,e],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val">${e.length} runs</div></div>`).join(''):'<div class="empty">No data</div>');const byR=Object.entries(g).filter(([,e])=>e.length>=2).map(([n,e])=>{const s=e.filter(x=>x.status==='success').length;return[n,Math.round((s/e.length)*100)];}).sort((a,b)=>b[1]-a[1]).slice(0,5);set('topReliable',byR.length?byR.map(([n,r],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val" style="color:var(--gr)">${r}%</div></div>`).join(''):'<div class="empty">Need 2+ runs</div>');}
 
-function renderSettingsPage(){document.getElementById('set-name').textContent=S.user?.name||'—';document.getElementById('set-email').textContent=S.user?.email||'—';document.getElementById('set-worker').textContent=S.user?.workerUrl||'Not set';const src=document.getElementById('cstat');if(src){document.getElementById('settingsConnStat').className=src.className;document.getElementById('settingsConnDot').className=document.getElementById('cdot').className;document.getElementById('settingsConnTxt').textContent=document.getElementById('ctxt').textContent;}}
+function renderSettingsPage(){set('set-name',S.profile?.name||'—');set('set-email',S.user?.email||'—');set('set-uid',(S.user?.id||'').slice(0,18)+'…');set('set-worker',S.profile?.worker_url||'Not set');const src=document.getElementById('cstat');if(src){document.getElementById('settingsConnStat').className=src.className;document.getElementById('settingsConnDot').className=document.getElementById('cdot').className;document.getElementById('settingsConnTxt').textContent=document.getElementById('ctxt').textContent;}}
 
 // ═══════════════════════════════════════════════════════
 // SETTINGS MODAL
 // ═══════════════════════════════════════════════════════
-function showModal(){document.getElementById('mWorker').value=S.user?.workerUrl||'';document.getElementById('modal').classList.add('open');}
+function showModal(){document.getElementById('mWorker').value=S.profile?.worker_url||'';document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');}
 function closeModalOut(e){if(e.target===document.getElementById('modal'))closeModal();}
+
 async function saveWorkerUrl(){
   const w=document.getElementById('mWorker').value.trim().replace(/\/$/,'');
   if(!w) return toast('Enter a Worker URL','er');
-  // save permanently to account
-  S.user.workerUrl=w;
-  saveAccount(S.user);
+  const btn=document.getElementById('mSaveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Saving…';
+
+  // Save to Supabase profiles table
+  const {error}=await sb.from('profiles').upsert({id:S.user.id,name:S.profile?.name||'',worker_url:w});
+  btn.disabled=false; btn.innerHTML='Save to Supabase →';
+
+  if(error) return toast('Error saving: '+error.message,'er');
+
+  S.profile={...S.profile,worker_url:w};
   updateConnUI();
   closeModal();
-  document.getElementById('set-worker').textContent=w;
-  toast('Worker URL saved permanently to your account ✓','ok');
+  set('set-worker',w);
+  toast('Worker URL saved to Supabase ✓','ok');
   clearInterval(S.timer);
   fetchData(true);
   startTimer();
 }
 
 function updateConnUI(){
-  const w=S.user?.workerUrl||'';
+  const w=S.profile?.worker_url||'';
   document.getElementById('curl').textContent=w||'No worker configured';
-  const box=document.getElementById('whUrlBox');
-  box.textContent=w?w+'/webhook':'Configure worker URL in Settings →';
-  if(document.getElementById('set-worker')) document.getElementById('set-worker').textContent=w||'Not set';
+  document.getElementById('whUrlBox').textContent=w?w+'/webhook':'Configure Worker URL in Settings →';
+  document.getElementById('mWorker').value=w;
+  if(document.getElementById('set-worker')) set('set-worker',w||'Not set');
 }
-function copyWebhook(){if(!S.user?.workerUrl) return toast('Configure Worker URL first','er');navigator.clipboard.writeText(S.user.workerUrl+'/webhook').then(()=>toast('Webhook URL copied!','ok'));}
+function copyWebhook(){const w=S.profile?.worker_url;if(!w) return toast('Configure Worker URL first','er');navigator.clipboard.writeText(w+'/webhook').then(()=>toast('Webhook URL copied!','ok'));}
 function setConn(type,text){['cstat','settingsConnStat'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`cstat ${type}`;});['cdot','settingsConnDot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`cdot ${type}`;});['ctxt','settingsConnTxt'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=text;});}
-async function clearData(){if(!S.user?.workerUrl) return toast('No worker configured','er');if(!confirm('Delete all execution data?')) return;try{await fetch(S.user.workerUrl+'/executions',{method:'DELETE'});S.executions=[];renderAll();toast('Data cleared','ok');}catch{toast('Failed','er');}}
+async function clearData(){const w=S.profile?.worker_url;if(!w) return toast('No worker configured','er');if(!confirm('Delete all execution data?')) return;try{await fetch(w+'/executions',{method:'DELETE'});S.executions=[];renderAll();toast('Data cleared','ok');}catch{toast('Failed','er');}}
 
 // ═══════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════
-function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+function set(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
+function errShow(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.display='block';}}
+function errHide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
 function togglePw(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'👁':'🙈';}
 function timeAgo(d){if(!d||isNaN(d))return'—';const s=Math.floor((Date.now()-d)/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
 function isToday(d){const t=new Date();return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(7px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
 
-// INIT
+// START
 init();
 </script>
 </body>
