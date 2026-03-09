@@ -2,603 +2,1159 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>FlowPulse — Monitor Your n8n Automations in Real-Time</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>FlowPulse — n8n Automation Intelligence</title>
+<meta name="description" content="Real-time n8n automation monitoring dashboard"/>
+<meta name="theme-color" content="#050607"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FlowPulse"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --bg:#050607;--s1:#0b0d10;--s2:#111418;--s3:#171b21;
   --b1:rgba(255,255,255,0.055);--b2:rgba(255,255,255,0.1);
   --tx:#e4e7ec;--mu:#576070;--mu2:#8490a0;
-  --ac:#00d4ff;--pu:#8b5cf6;--gr:#0fba81;--re:#f04444;--ye:#f59e0b;
+  --ac:#00d4ff;--ac2:rgba(0,212,255,0.1);
+  --gr:#0fba81;--gr2:rgba(15,186,129,0.1);
+  --ye:#f59e0b;--ye2:rgba(245,158,11,0.1);
+  --re:#f04444;--re2:rgba(240,68,68,0.08);
+  --pu:#8b5cf6;--pu2:rgba(139,92,246,0.1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden}
-body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:0.45}
 
-/* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 5vw;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,6,7,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1)}
-.nav-logo{display:flex;align-items:center;gap:9px}
-.nav-logo-icon{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 18px rgba(0,212,255,.25)}
-.nav-logo-name{font-size:17px;font-weight:800;letter-spacing:-.4px}.nav-logo-name span{color:var(--ac)}
-.nav-links{display:flex;align-items:center;gap:6px}
-.nav-link{font-size:13px;font-weight:500;color:var(--mu2);padding:6px 13px;border-radius:7px;cursor:pointer;transition:all .15s;text-decoration:none}
-.nav-link:hover{color:var(--tx);background:var(--s2)}
-.nav-cta{background:linear-gradient(135deg,var(--ac),#009ec4);color:#000!important;font-weight:700;padding:7px 16px;border-radius:8px}
-.nav-cta:hover{opacity:.87;background:linear-gradient(135deg,var(--ac),#009ec4)!important}
-
-/* HERO */
-.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 5vw 80px;position:relative;overflow:hidden}
-.hero-orb{position:absolute;border-radius:50%;filter:blur(150px);pointer-events:none}
-.hero-orb.a{width:700px;height:700px;background:rgba(0,212,255,.07);top:-200px;left:-200px;animation:float 12s ease-in-out infinite}
-.hero-orb.b{width:600px;height:600px;background:rgba(139,92,246,.07);bottom:-200px;right:-200px;animation:float 10s ease-in-out infinite reverse}
-.hero-orb.c{width:400px;height:400px;background:rgba(15,186,129,.05);top:50%;left:50%;transform:translate(-50%,-50%)}
-@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,20px)}}
-.hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.18);border-radius:99px;padding:6px 14px;font-size:11.5px;font-weight:600;color:var(--ac);margin-bottom:28px;animation:fadeUp .6s ease both}
-.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--ac);box-shadow:0 0 6px var(--ac);animation:blink 2s infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.hero-title{font-size:clamp(38px,6vw,76px);font-weight:800;letter-spacing:-2px;line-height:1.05;margin-bottom:22px;animation:fadeUp .6s .1s ease both}
-.hero-title .g{background:linear-gradient(135deg,var(--ac),var(--pu));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-title .g2{background:linear-gradient(135deg,var(--gr),var(--ac));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hero-sub{font-size:clamp(15px,2vw,19px);color:var(--mu2);max-width:600px;line-height:1.65;margin-bottom:38px;animation:fadeUp .6s .2s ease both}
-.hero-btns{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;animation:fadeUp .6s .3s ease both}
-.btn-hero{padding:13px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;transition:all .2s;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-.btn-primary{background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;border:none;box-shadow:0 0 32px rgba(0,212,255,.25)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 48px rgba(0,212,255,.35);opacity:.9}
-.btn-secondary{background:transparent;color:var(--tx);border:1px solid var(--b2)}
-.btn-secondary:hover{background:var(--s2);transform:translateY(-2px)}
-.hero-stats{display:flex;align-items:center;gap:32px;margin-top:52px;animation:fadeUp .6s .4s ease both;flex-wrap:wrap;justify-content:center}
-.hstat{display:flex;flex-direction:column;align-items:center;gap:4px}
-.hstat-val{font-size:26px;font-weight:800;letter-spacing:-1px}
-.hstat-lbl{font-size:11px;color:var(--mu2);font-weight:500}
-.hstat-div{width:1px;height:36px;background:var(--b1)}
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-
-/* DEMO PREVIEW */
-.demo-wrap{width:100%;max-width:900px;margin:60px auto 0;padding:0 5vw;animation:fadeUp .8s .5s ease both;position:relative}
-.demo-glow{position:absolute;inset:-40px;background:radial-gradient(ellipse at center,rgba(0,212,255,.08) 0%,transparent 70%);pointer-events:none}
-.demo-frame{background:var(--s1);border:1px solid var(--b2);border-radius:16px;overflow:hidden;box-shadow:0 40px 120px rgba(0,0,0,.6)}
-.demo-bar{height:40px;background:var(--s2);border-bottom:1px solid var(--b1);display:flex;align-items:center;padding:0 14px;gap:6px}
-.demo-dot{width:10px;height:10px;border-radius:50%}
-.demo-dot.r{background:#f04444}.demo-dot.y{background:#f59e0b}.demo-dot.g{background:#0fba81}
-.demo-url{flex:1;margin:0 12px;background:var(--s3);border-radius:5px;padding:5px 10px;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--mu2)}
-.demo-content{padding:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.demo-card{background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:13px}
-.demo-card-lbl{font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
-.demo-card-val{font-size:22px;font-weight:800;letter-spacing:-.8px}
-.demo-bar2{display:flex;align-items:flex-end;gap:3px;height:28px;margin-top:8px}
-.demo-b{flex:1;border-radius:2px 2px 0 0;background:rgba(0,212,255,.3);min-height:3px}
-.demo-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1)}
-.demo-row:last-child{border-bottom:none}
-.demo-dot2{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.demo-row-name{flex:1;font-size:11px;font-weight:600}
-.demo-row-pill{font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px}
-.demo-ok{background:rgba(15,186,129,.15);color:#0fba81}
-.demo-er{background:rgba(240,68,68,.15);color:#f04444}
-
-/* SECTION */
-section{padding:90px 5vw}
-.sec-badge{display:inline-flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:99px;padding:5px 13px;font-size:10.5px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:18px}
-.sec-title{font-size:clamp(28px,4vw,46px);font-weight:800;letter-spacing:-1.5px;line-height:1.1;margin-bottom:14px}
-.sec-sub{font-size:16px;color:var(--mu2);line-height:1.65;max-width:520px}
-.center{text-align:center}.center .sec-sub{margin:0 auto}
-
-/* FEATURES */
-.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:52px}
-.feat{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:26px;transition:border-color .2s,transform .2s;position:relative;overflow:hidden}
-.feat:hover{border-color:var(--b2);transform:translateY(-3px)}
-.feat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--ac),transparent);opacity:0;transition:opacity .3s}
-.feat:hover::before{opacity:1}
-.feat-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:16px}
-.fi-b{background:rgba(0,212,255,.1)}.fi-g{background:rgba(15,186,129,.1)}.fi-p{background:rgba(139,92,246,.1)}.fi-y{background:rgba(245,158,11,.1)}.fi-r{background:rgba(240,68,68,.1)}
-.feat-title{font-size:15px;font-weight:700;margin-bottom:8px}
-.feat-desc{font-size:13px;color:var(--mu2);line-height:1.65}
-
-/* HOW IT WORKS */
-.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px}
-.how-step{text-align:center;padding:28px 22px}
-.how-num{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#000;margin:0 auto 18px;box-shadow:0 0 24px rgba(0,212,255,.2)}
-.how-title{font-size:16px;font-weight:700;margin-bottom:8px}
-.how-desc{font-size:13px;color:var(--mu2);line-height:1.65}
-.how-arrow{display:flex;align-items:center;justify-content:center;color:var(--mu);font-size:22px;padding-top:28px}
-
-/* PRICING */
-#pricing{background:linear-gradient(180deg,var(--bg) 0%,rgba(11,13,16,.5) 50%,var(--bg) 100%)}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:52px;max-width:960px;margin-left:auto;margin-right:auto}
-.plan{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:30px;position:relative;transition:transform .2s,border-color .2s}
-.plan:hover{transform:translateY(-4px)}
-.plan.popular{border-color:var(--ac);background:linear-gradient(180deg,rgba(0,212,255,.04),var(--s1))}
-.plan-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--ac),var(--pu));color:#000;font-size:10px;font-weight:800;padding:4px 14px;border-radius:99px;letter-spacing:.5px;white-space:nowrap}
-.plan-name{font-size:14px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
-.plan-price{font-size:46px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:4px}
-.plan-price span{font-size:16px;color:var(--mu2);font-weight:500;letter-spacing:0}
-.plan-desc{font-size:12.5px;color:var(--mu2);margin-bottom:24px;line-height:1.5}
-.plan-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
-.pf{display:flex;align-items:center;gap:9px;font-size:12.5px}
-.pf-check{width:17px;height:17px;border-radius:50%;background:rgba(15,186,129,.15);color:var(--gr);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0}
-.pf-x{background:rgba(90,97,112,.1);color:var(--mu)}
-.pf.dim{color:var(--mu2)}
-.plan-btn{width:100%;padding:12px;border-radius:10px;border:none;font-size:13.5px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;transition:all .2s}
-.plan-btn-free{background:var(--s2);color:var(--tx);border:1px solid var(--b2)}
-.plan-btn-free:hover{background:var(--s3)}
-.plan-btn-pro{background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;box-shadow:0 0 24px rgba(0,212,255,.2)}
-.plan-btn-pro:hover{opacity:.87;transform:translateY(-1px)}
-.plan-btn-agency{background:linear-gradient(135deg,var(--pu),#6d3fd8);color:#fff}
-.plan-btn-agency:hover{opacity:.87;transform:translateY(-1px)}
-.pricing-note{text-align:center;margin-top:22px;font-size:12.5px;color:var(--mu2)}
-.pricing-note b{color:var(--gr)}
-
-/* FAQ */
-.faq-list{max-width:680px;margin:48px auto 0;display:flex;flex-direction:column;gap:10px}
-.faq-item{background:var(--s1);border:1px solid var(--b1);border-radius:12px;overflow:hidden}
-.faq-q{padding:16px 20px;font-size:14px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center;transition:background .15s}
-.faq-q:hover{background:var(--s2)}
-.faq-arrow{color:var(--mu2);transition:transform .2s;font-size:16px}
-.faq-item.open .faq-arrow{transform:rotate(180deg)}
-.faq-a{padding:0 20px;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;font-size:13px;color:var(--mu2);line-height:1.7}
-.faq-item.open .faq-a{max-height:200px;padding:0 20px 16px}
-
-/* SOCIAL PROOF */
-.testimonials{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px}
-.tcard{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:22px}
-.tcard-text{font-size:13.5px;line-height:1.7;color:var(--mu2);margin-bottom:16px;font-style:italic}
-.tcard-text::before{content:'"';color:var(--ac);font-size:22px;font-style:normal;line-height:0;vertical-align:-6px;margin-right:3px}
-.tcard-author{display:flex;align-items:center;gap:10px}
-.tcard-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.tcard-name{font-size:12.5px;font-weight:700}
-.tcard-role{font-size:11px;color:var(--mu2)}
-
-/* CTA */
-.cta-section{padding:90px 5vw;text-align:center;position:relative;overflow:hidden}
-.cta-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:300px;background:radial-gradient(ellipse,rgba(0,212,255,.06) 0%,transparent 70%);pointer-events:none}
-.cta-title{font-size:clamp(28px,4vw,52px);font-weight:800;letter-spacing:-1.5px;margin-bottom:16px}
-.cta-sub{font-size:16px;color:var(--mu2);margin-bottom:36px}
-
-/* FOOTER */
-footer{border-top:1px solid var(--b1);padding:36px 5vw;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.foot-logo{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800}
-.foot-logo span{color:var(--ac)}
-.foot-links{display:flex;gap:20px}
-.foot-link{font-size:12.5px;color:var(--mu2);cursor:pointer;transition:color .15s}
-.foot-link:hover{color:var(--tx)}
-.foot-copy{font-size:12px;color:var(--mu)}
-
-/* STRIPE MODAL */
-.stripe-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
-.stripe-modal-bg.open{opacity:1;pointer-events:all}
-.stripe-modal{background:var(--s1);border:1px solid var(--b2);border-radius:18px;padding:32px;width:480px;max-width:95vw;transform:scale(.95) translateY(10px);transition:transform .25s}
-.stripe-modal-bg.open .stripe-modal{transform:scale(1) translateY(0)}
-.sm-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
-.sm-plan-name{font-size:12px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
-.sm-plan-price{font-size:28px;font-weight:800;letter-spacing:-1px}
-.sm-close{width:28px;height:28px;border-radius:6px;background:var(--s2);border:1px solid var(--b1);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--mu2);font-size:16px;transition:all .15s}
-.sm-close:hover{background:var(--s3);color:var(--tx)}
-.sm-features{background:var(--s2);border-radius:10px;padding:14px 16px;margin-bottom:22px;display:flex;flex-direction:column;gap:7px}
-.sm-feat{display:flex;align-items:center;gap:8px;font-size:12.5px}
-.sm-feat-check{color:var(--gr);font-size:13px}
+/* ── AUTH ── */
+.auth-bg{position:fixed;inset:0;overflow:hidden;z-index:0}
+.orb{position:absolute;border-radius:50%;filter:blur(140px);opacity:0.12;animation:float 10s ease-in-out infinite}
+.orb.a{width:560px;height:560px;background:var(--ac);top:-140px;left:-140px}
+.orb.b{width:460px;height:460px;background:var(--pu);bottom:-120px;right:-120px;animation-delay:5s}
+.orb.c{width:300px;height:300px;background:var(--gr);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:2.5s}
+@keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(20px,15px)}}
+.auth-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.auth-logo-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 28px rgba(0,212,255,.3)}
+.auth-logo-name{font-size:22px;font-weight:800;letter-spacing:-.5px}.auth-logo-name span{color:var(--ac)}
+.auth-logo-tag{font-size:10px;color:var(--mu2);font-weight:500;letter-spacing:.5px;margin-top:1px}
+.auth-card{background:rgba(11,13,16,0.92);border:1px solid var(--b2);border-radius:20px;padding:36px;width:460px;max-width:95vw;backdrop-filter:blur(24px);animation:cardIn .5s cubic-bezier(.4,0,.2,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+.auth-card-title{font-size:22px;font-weight:800;letter-spacing:-.5px;margin-bottom:5px}
+.auth-card-sub{font-size:12.5px;color:var(--mu2);margin-bottom:28px;line-height:1.6}
 .fg{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .fl{font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.9px}
-.fi{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:11px 14px;color:var(--tx);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border-color .2s}
+.fi-wrap{position:relative}
+.fi{width:100%;background:var(--s2);border:1px solid var(--b2);border-radius:10px;padding:12px 40px 12px 14px;color:var(--tx);font-size:13px;font-family:'Syne',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
 .fi:focus{border-color:var(--ac);box-shadow:0 0 0 3px rgba(0,212,255,.07)}
 .fi::placeholder{color:var(--mu)}
-.stripe-btn{width:100%;padding:13px;border-radius:10px;border:none;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s;margin-top:6px}
-.stripe-btn.pro{background:linear-gradient(135deg,var(--ac),#009ec4);color:#000}
-.stripe-btn.agency{background:linear-gradient(135deg,var(--pu),#6d3fd8);color:#fff}
-.stripe-btn:hover{opacity:.87;transform:translateY(-1px)}
-.stripe-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.stripe-note{text-align:center;font-size:11px;color:var(--mu2);margin-top:10px;display:flex;align-items:center;justify-content:center;gap:5px}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,.2);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
+.fi-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--mu);font-size:15px;cursor:pointer;transition:color .15s;user-select:none}
+.fi-icon:hover{color:var(--tx)}
+.fi-hint{font-size:10.5px;color:var(--mu2);margin-top:4px;line-height:1.5}
+.fi-hint.er{color:var(--re)}.fi-hint.ok{color:var(--gr)}
+.auth-btn{width:100%;padding:13px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;font-size:14px;font-weight:800;font-family:'Syne',sans-serif;cursor:pointer;transition:opacity .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px}
+.auth-btn:hover{opacity:.87;transform:translateY(-1px)}.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-btn.secondary{background:var(--s2);color:var(--tx);border:1px solid var(--b2);margin-top:10px}
+.auth-btn.secondary:hover{background:var(--s3);opacity:1}
+.auth-switch{text-align:center;margin-top:18px;font-size:12.5px;color:var(--mu2)}
+.auth-switch a{color:var(--ac);cursor:pointer;font-weight:600}
+.auth-switch a:hover{opacity:.8}
+.auth-err{background:var(--re2);border:1px solid rgba(240,68,68,.22);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--re);margin-top:12px;display:none;animation:cardIn .3s ease}
+.auth-ok-box{background:var(--gr2);border:1px solid rgba(15,186,129,.22);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--gr);margin-top:12px;display:none}
+.step-indicator{display:flex;align-items:center;gap:8px;margin-bottom:24px}
+.step{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600}
+.step-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid var(--b2);color:var(--mu2);transition:all .3s}
+.step-dot.active{background:var(--ac);border-color:var(--ac);color:#000}
+.step-dot.done{background:var(--gr);border-color:var(--gr);color:#000}
+.step-label{color:var(--mu2)}.step-label.active{color:var(--tx)}
+.step-line{flex:1;height:1px;background:var(--b1)}
+
+/* ── LOADING SCREEN ── */
+#loadingPage{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:600;gap:16px}
+.load-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 0 30px rgba(0,212,255,.3);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.load-text{font-size:13px;color:var(--mu2)}
+
+/* ── APP ── */
+#appPage{display:none}
+.rbar{height:2px;background:linear-gradient(90deg,var(--ac),var(--pu));position:fixed;top:0;left:220px;right:0;z-index:300;transform:scaleX(0);transform-origin:left}
+.rbar.go{transform:scaleX(1);transition:transform 9.5s linear}.rbar.done{opacity:0;transition:opacity .3s}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:220px;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;z-index:100}
+.slogo{padding:20px 16px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:9px}
+.slogo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,212,255,.18)}
+.slogo-text{font-size:15px;font-weight:800;letter-spacing:-.3px;flex:1}.slogo-text span{color:var(--ac)}
+.sbadge{font-size:9px;background:rgba(15,186,129,.15);color:var(--gr);padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:.5px}
+.snav{flex:1;padding:12px 9px;display:flex;flex-direction:column;gap:1px;overflow-y:auto}
+.snav-sec{font-size:9px;font-weight:700;color:var(--mu);letter-spacing:1.5px;text-transform:uppercase;padding:9px 8px 3px}
+.ni{display:flex;align-items:center;gap:9px;padding:8px 9px;border-radius:7px;font-size:12.5px;font-weight:500;color:var(--mu2);cursor:pointer;transition:all .15s}
+.ni:hover{background:var(--s2);color:var(--tx)}.ni.active{background:rgba(0,212,255,.08);color:var(--ac)}
+.ni .ic{font-size:13px;width:17px;text-align:center}
+.nbadge{margin-left:auto;background:var(--re);color:#fff;font-size:9px;font-weight:700;padding:2px 6px;border-radius:99px}
+.sbot{padding:10px 9px;border-top:1px solid var(--b1)}
+.urow{display:flex;align-items:center;gap:9px;padding:9px;border-radius:8px;background:var(--s2)}
+.ava{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.uinfo{flex:1;min-width:0}
+.uname{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uemail{font-size:10px;color:var(--mu2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lout{color:var(--mu);font-size:13px;cursor:pointer;padding:3px;border-radius:4px;transition:color .15s}
+.lout:hover{color:var(--re)}
+.main{margin-left:220px;min-height:100vh}
+.topbar{height:56px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--b1);background:rgba(5,6,7,.87);backdrop-filter:blur(16px);position:sticky;top:0;z-index:50;gap:11px}
+.tb-title{font-size:15.5px;font-weight:700;flex:1;letter-spacing:-.2px}
+.tb-title .sub{color:var(--mu);font-weight:400;font-size:12.5px;margin-left:6px}
+.tb-r{display:flex;align-items:center;gap:9px}
+.srch{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:6px 10px;width:190px;transition:border-color .15s}
+.srch:focus-within{border-color:var(--ac)}
+.srch input{background:none;border:none;outline:none;color:var(--tx);font-size:12px;width:100%;font-family:'Syne',sans-serif}
+.srch input::placeholder{color:var(--mu)}
+.lpill{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--gr);background:var(--gr2);border:1px solid rgba(15,186,129,.18);padding:4px 9px;border-radius:99px}
+.ldot{width:6px;height:6px;border-radius:50%;background:var(--gr);box-shadow:0 0 5px var(--gr);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Syne',sans-serif}
+.btn:hover{background:var(--s3)}.btn-p{background:linear-gradient(135deg,var(--ac),#009ec4);border-color:transparent;color:#000;font-weight:700}
+.btn-p:hover{opacity:.86}
+.page{display:none;padding:22px;animation:up .35s ease}.page.active{display:block}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;overflow:hidden;margin-bottom:16px}
+.card-last{margin-bottom:0}
+.ch{padding:15px 17px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:13px;font-weight:700}.cm{font-size:11px;color:var(--mu2);display:flex;align-items:center;gap:5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:17px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:up .5s ease both}
+.stat:hover{border-color:var(--b2);transform:translateY(-2px)}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:9px}
+.st-lbl{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.9px;color:var(--mu2)}
+.st-ico{width:29px;height:29px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ico-b{background:rgba(0,212,255,.1)}.ico-g{background:var(--gr2)}.ico-r{background:var(--re2)}
+.st-val{font-size:28px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:5px}
+.st-note{font-size:10.5px}.cup{color:var(--gr)}.cdn{color:var(--re)}.cnm{color:var(--mu2)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:9px}
+.sb{flex:1;border-radius:2px}.sb.g{background:rgba(15,186,129,.4)}.sb.b{background:rgba(0,212,255,.35)}.sb.r{background:rgba(240,68,68,.4)}
+.g2{display:grid;grid-template-columns:1fr 320px;gap:16px}
+.rcol{display:flex;flex-direction:column;gap:16px}
+.tabs{display:flex;padding:0 17px;border-bottom:1px solid var(--b1);background:rgba(0,0,0,.1)}
+.tab{padding:7px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--mu2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--ac);border-bottom-color:var(--ac)}.tab:hover:not(.active){color:var(--tx)}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:9.5px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;padding:10px 17px;border-bottom:1px solid var(--b1);background:rgba(255,255,255,.01)}
+.tbl td{padding:11px 17px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}.tbl tr:hover td{background:rgba(255,255,255,.018)}
+.wn{display:flex;flex-direction:column;gap:2px}.wn-m{font-weight:600;font-size:12.5px}.wn-s{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700}
+.pd{width:5px;height:5px;border-radius:50%}
+.p-ok{background:var(--gr2);color:var(--gr)}.p-ok .pd{background:var(--gr)}
+.p-er{background:var(--re2);color:var(--re)}.p-er .pd{background:var(--re)}
+.p-mu{background:rgba(90,97,112,.15);color:var(--mu2)}.p-mu .pd{background:var(--mu2)}
+.hb{width:68px}.hbr{height:4px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:3px}.hbf{height:100%;border-radius:2px}
+.hpct{font-size:10px;font-family:'JetBrains Mono',monospace}
+.mono{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--mu2)}
+.connp{padding:16px}
+.cstat{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600}
+.cstat.ok{color:var(--gr)}.cstat.er{color:var(--re)}.cstat.idle{color:var(--mu2)}
+.cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cdot.ok{background:var(--gr);box-shadow:0 0 6px var(--gr)}.cdot.er{background:var(--re)}.cdot.idle{background:var(--mu)}
+.curl{font-size:10.5px;color:var(--mu2);font-family:'JetBrains Mono',monospace;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wh-url-box{background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 11px;margin-top:10px;font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--ac);word-break:break-all;cursor:pointer;transition:background .15s}
+.wh-url-box:hover{background:var(--s3)}
+.wh-lbl{font-size:9px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.ll{max-height:260px;overflow-y:auto}
+.ll::-webkit-scrollbar{width:3px}.ll::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.li{display:flex;align-items:flex-start;gap:9px;padding:9px 15px;border-bottom:1px solid rgba(255,255,255,.022)}
+.li:last-child{border-bottom:none}
+.lic{font-size:12px;flex-shrink:0;margin-top:1px}.lib{flex:1;min-width:0}
+.lit{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lis{font-size:10px;color:var(--mu2);margin-top:1px;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ltime{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.hl{padding:13px 15px;display:flex;flex-direction:column;gap:10px}
+.hr{display:flex;flex-direction:column;gap:4px}.hr-top{display:flex;justify-content:space-between;font-size:11.5px}
+.hr-n{font-weight:600}.hr-v{font-family:'JetBrains Mono',monospace;font-size:10.5px}
+.hr-t{height:5px;background:var(--s3);border-radius:3px;overflow:hidden}
+.hr-f{height:100%;border-radius:3px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.b2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.act{display:flex;align-items:flex-end;gap:4px;height:68px;padding:12px 17px}
+.ac{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.acw{flex:1;display:flex;align-items:flex-end;width:100%}
+.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(0,212,255,.5),rgba(0,212,255,.13));min-height:3px}
+.acl{font-size:8.5px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.el{padding:11px 15px;display:flex;flex-direction:column;gap:8px}
+.ei{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:7px;background:var(--re2);border:1px solid rgba(240,68,68,.1)}
+.edot{width:6px;height:6px;border-radius:50%;background:var(--re);margin-top:3px;flex-shrink:0}
+.eb{flex:1;min-width:0}.en{font-size:11.5px;font-weight:600}.em{font-size:10px;color:var(--mu2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.et{font-size:9.5px;color:var(--mu);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
+.wf-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:16px;transition:border-color .2s,transform .2s}
+.wf-card:hover{border-color:var(--b2);transform:translateY(-2px)}
+.wf-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.wf-card-name{font-size:13px;font-weight:700}.wf-card-id{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.wf-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.wf-stat{display:flex;flex-direction:column;gap:2px}
+.wf-stat-val{font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.wf-stat-lbl{font-size:9px;color:var(--mu2);text-transform:uppercase;letter-spacing:.6px}
+.wf-hbar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:10px}
+.wf-hbar-fill{height:100%;border-radius:2px;transition:width .8s}
+.exec-filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.filter-btn{padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s2);color:var(--mu2);transition:all .15s;font-family:'Syne',sans-serif}
+.filter-btn.active{background:var(--ac2);border-color:rgba(0,212,255,.3);color:var(--ac)}
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.health-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:18px}
+.health-card-name{font-size:13px;font-weight:700;margin-bottom:14px}
+.health-big-score{font-size:42px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:4px}
+.health-sublbl{font-size:10px;color:var(--mu2)}
+.health-bars{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.health-bar-row{display:flex;flex-direction:column;gap:3px}
+.health-bar-top{display:flex;justify-content:space-between;font-size:10.5px}
+.health-bar-name{color:var(--mu2)}.health-bar-val{font-family:'JetBrains Mono',monospace;font-size:10px}
+.health-bar-track{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.health-bar-fill{height:100%;border-radius:2px;transition:width .8s}
+.alert-item{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--b1)}
+.alert-item:last-child{border-bottom:none}
+.alert-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.alert-ico.er{background:var(--re2)}
+.alert-body{flex:1}.alert-title{font-size:12.5px;font-weight:600}.alert-msg{font-size:11px;color:var(--mu2);margin-top:3px}
+.alert-meta{display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--mu)}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.big-chart{display:flex;align-items:flex-end;gap:5px;height:100px;padding:16px 17px 12px}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.bcw{flex:1;display:flex;align-items:flex-end;width:100%}
+.bcb{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.bcl{font-size:8px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+.analytics-stat{background:var(--s1);border:1px solid var(--b1);border-radius:11px;padding:18px}
+.analytics-stat-val{font-size:26px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+.analytics-stat-lbl{font-size:10px;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px}
+.top-list{padding:0}
+.top-item{display:flex;align-items:center;gap:10px;padding:10px 17px;border-bottom:1px solid var(--b1)}
+.top-item:last-child{border-bottom:none}
+.top-rank{width:20px;height:20px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--mu2);flex-shrink:0}
+.top-rank.gold{background:rgba(245,158,11,.15);color:var(--ye)}
+.top-name{flex:1;font-size:12px;font-weight:600}.top-val{font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--mu2)}
+.settings-section{margin-bottom:20px}
+.settings-title{font-size:11px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.9px;margin-bottom:10px;padding:0 2px}
+.settings-card{background:var(--s1);border:1px solid var(--b1);border-radius:11px;overflow:hidden}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--b1)}
+.settings-row:last-child{border-bottom:none}
+.settings-row-left{display:flex;flex-direction:column;gap:3px}
+.settings-row-name{font-size:12.5px;font-weight:600}.settings-row-desc{font-size:11px;color:var(--mu2)}
+.settings-val{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--ac)}
+.talert{background:var(--re2);border:1px solid rgba(240,68,68,.2);border-radius:9px;padding:10px 15px;display:flex;align-items:center;gap:9px;font-size:12.5px;margin-bottom:16px}
+.talert b{color:var(--re)}.talert-x{cursor:pointer;color:var(--mu);font-size:17px;line-height:1;margin-left:auto}
+.empty{padding:28px;text-align:center;color:var(--mu2);font-size:12.5px}
+.empty-i{font-size:26px;margin-bottom:7px}
+.mbg{position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.mbg.open{opacity:1;pointer-events:all}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:24px;width:440px;max-width:95vw;transform:scale(.95);transition:transform .2s}
+.mbg.open .modal{transform:scale(1)}
+.mh{font-size:15px;font-weight:800;margin-bottom:4px}.ms{font-size:12px;color:var(--mu2);margin-bottom:18px}
+.mac{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.tw{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:7px;z-index:9998}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:10px 13px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;min-width:210px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.toast.ok{border-color:rgba(15,186,129,.28)}.toast.er{border-color:rgba(240,68,68,.28)}.toast.in{border-color:rgba(0,212,255,.28)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(0,0,0,.15);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:1080px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.analytics-grid{grid-template-columns:1fr}}
+@media(max-width:680px){.sidebar{transform:translateX(-100%)}.main{margin-left:0}.stats{grid-template-columns:1fr}.b2{grid-template-columns:1fr}}
 
-/* TOAST */
-.tw{position:fixed;bottom:18px;right:18px;z-index:9998;display:flex;flex-direction:column;gap:7px}
-.toast{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:10px 13px;font-size:12px;display:flex;align-items:center;gap:7px;min-width:200px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
-@keyframes toastIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.toast.ok{border-color:rgba(15,186,129,.3)}.toast.er{border-color:rgba(240,68,68,.3)}
+/* ── PWA MOBILE ── */
+/* Install banner */
+.pwa-banner{position:fixed;bottom:70px;left:12px;right:12px;background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:slideUp .4s ease;display:none}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.pwa-banner-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pwa-banner-text{flex:1}.pwa-banner-title{font-size:13px;font-weight:700}.pwa-banner-sub{font-size:11px;color:var(--mu2);margin-top:2px}
+.pwa-banner-btns{display:flex;flex-direction:column;gap:5px;flex-shrink:0}
+.pwa-install-btn{padding:6px 12px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--ac),#009ec4);color:#000;font-size:11px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif}
+.pwa-dismiss-btn{padding:5px 12px;border-radius:7px;border:1px solid var(--b1);background:transparent;color:var(--mu2);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif}
 
-@media(max-width:900px){.features-grid{grid-template-columns:repeat(2,1fr)}.pricing-grid{grid-template-columns:1fr;max-width:400px}.how-grid{grid-template-columns:1fr}.testimonials{grid-template-columns:1fr}.how-arrow{display:none}.demo-content{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:600px){.features-grid{grid-template-columns:1fr}.hero-stats{gap:20px}.nav-links .nav-link:not(.nav-cta){display:none}}
+/* Mobile bottom nav */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(11,13,16,.97);border-top:1px solid var(--b1);backdrop-filter:blur(20px);z-index:200;padding:0 4px;padding-bottom:env(safe-area-inset-bottom)}
+.mob-nav-inner{display:flex;align-items:stretch;height:100%}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 2px;border-radius:10px;transition:all .15s;position:relative}
+.mn-item.active .mn-icon{color:var(--ac)}.mn-item.active .mn-lbl{color:var(--ac)}
+.mn-icon{font-size:18px;color:var(--mu2);transition:color .15s}
+.mn-lbl{font-size:9.5px;font-weight:600;color:var(--mu2);transition:color .15s}
+.mn-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--re);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:99px;min-width:14px;text-align:center}
+
+/* Mobile topbar */
+.mob-topbar{display:none;position:fixed;top:0;left:0;right:0;height:56px;background:rgba(5,6,7,.95);border-bottom:1px solid var(--b1);backdrop-filter:blur(16px);z-index:150;padding:0 16px;align-items:center;justify-content:space-between;padding-top:env(safe-area-inset-top)}
+.mob-logo{display:flex;align-items:center;gap:7px}
+.mob-logo-icon{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:12px}
+.mob-logo-name{font-size:15px;font-weight:800}.mob-logo-name span{color:var(--ac)}
+.mob-topbar-r{display:flex;align-items:center;gap:8px}
+.mob-sync-btn{width:32px;height:32px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:background .15s}
+.mob-sync-btn:hover{background:var(--s3)}
+.mob-live{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--gr);background:var(--gr2);padding:4px 8px;border-radius:99px}
+.mob-ldot{width:5px;height:5px;border-radius:50%;background:var(--gr);animation:blink 2s infinite}
+
+/* Mobile page adjustments */
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding-top:56px;padding-bottom:70px}
+  .topbar{display:none}
+  .mob-topbar{display:flex}
+  .mob-nav{display:block}
+  .page{padding:14px}
+  .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+  .stat{padding:13px}
+  .st-val{font-size:22px}
+  .g2{grid-template-columns:1fr}
+  .b2{grid-template-columns:1fr}
+  .analytics-grid{grid-template-columns:1fr}
+  .wf-grid{grid-template-columns:1fr}
+  .health-grid{grid-template-columns:1fr}
+  .settings-row{flex-direction:column;align-items:flex-start;gap:8px}
+  .card{border-radius:10px}
+  .tbl th,.tbl td{padding:9px 12px;font-size:11px}
+  .wn-m{font-size:11.5px}
+  .srch{width:140px}
+  .rbar{left:0}
+  /* hide less important table cols on mobile */
+  .tbl .hide-mob{display:none}
+}
 </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-logo">
-    <div class="nav-logo-icon">⚡</div>
-    <div class="nav-logo-name">Flow<span>Pulse</span></div>
-  </div>
-  <div class="nav-links">
-    <a href="#features" class="nav-link">Features</a>
-    <a href="#how" class="nav-link">How it works</a>
-    <a href="#pricing" class="nav-link">Pricing</a>
-    <a href="app.html" class="nav-link nav-cta">Open Dashboard →</a>
-  </div>
-</nav>
+<!-- LOADING -->
+<div id="loadingPage">
+  <div class="load-icon">⚡</div>
+  <div class="load-text">Loading FlowPulse…</div>
+</div>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-orb a"></div><div class="hero-orb b"></div><div class="hero-orb c"></div>
-  <div class="hero-badge"><div class="badge-dot"></div>Live n8n Automation Monitoring</div>
-  <h1 class="hero-title">
-    Know when your<br/><span class="g">automations fail</span><br/>before clients do
-  </h1>
-  <p class="hero-sub">FlowPulse monitors all your n8n workflows in real-time. Get instant alerts, health scores, and beautiful dashboards — without leaving your browser.</p>
-  <div class="hero-btns">
-    <a href="#pricing" class="btn-hero btn-primary">Start for free →</a>
-    <a href="#how" class="btn-hero btn-secondary">See how it works</a>
-  </div>
-  <div class="hero-stats">
-    <div class="hstat"><div class="hstat-val" style="color:var(--ac)">10s</div><div class="hstat-lbl">Refresh interval</div></div>
-    <div class="hstat-div"></div>
-    <div class="hstat"><div class="hstat-val" style="color:var(--gr)">100%</div><div class="hstat-lbl">Browser-based</div></div>
-    <div class="hstat-div"></div>
-    <div class="hstat"><div class="hstat-val" style="color:var(--pu)">∞</div><div class="hstat-lbl">Workflows tracked</div></div>
-    <div class="hstat-div"></div>
-    <div class="hstat"><div class="hstat-val" style="color:var(--ye)">Free</div><div class="hstat-lbl">To get started</div></div>
-  </div>
+<!-- SIGNUP -->
+<div id="signupPage" style="display:none">
+  <div class="auth-bg"><div class="orb a"></div><div class="orb b"></div><div class="orb c"></div></div>
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">⚡</div>
+      <div><div class="auth-logo-name">Flow<span>Pulse</span></div><div class="auth-logo-tag">n8n Automation Intelligence</div></div>
+    </div>
+    <div class="auth-card">
+      <div class="step-indicator">
+        <div class="step"><div class="step-dot active" id="sd1">1</div><div class="step-label active">Account</div></div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-dot" id="sd2">2</div><div class="step-label">Connect n8n</div></div>
+        <div class="step-line"></div>
+        <div class="step"><div class="step-dot" id="sd3">3</div><div class="step-label">Done</div></div>
+      </div>
 
-  <!-- DEMO PREVIEW -->
-  <div class="demo-wrap">
-    <div class="demo-glow"></div>
-    <div class="demo-frame">
-      <div class="demo-bar">
-        <div class="demo-dot r"></div><div class="demo-dot y"></div><div class="demo-dot g"></div>
-        <div class="demo-url">flowpulse.dashboard / Live Overview</div>
-      </div>
-      <div class="demo-content">
-        <div class="demo-card"><div class="demo-card-lbl">Workflows</div><div class="demo-card-val" style="color:var(--ac)">12</div><div class="demo-bar2"><div class="demo-b" style="height:40%"></div><div class="demo-b" style="height:60%"></div><div class="demo-b" style="height:80%"></div><div class="demo-b" style="height:55%"></div><div class="demo-b" style="height:90%"></div><div class="demo-b" style="height:70%"></div><div class="demo-b" style="height:100%"></div></div></div>
-        <div class="demo-card"><div class="demo-card-lbl">Executions</div><div class="demo-card-val" style="color:var(--gr)">1,284</div><div class="demo-bar2"><div class="demo-b" style="height:50%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:70%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:45%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:80%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:65%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:90%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:75%;background:rgba(15,186,129,.3)"></div></div></div>
-        <div class="demo-card"><div class="demo-card-lbl">Success Rate</div><div class="demo-card-val" style="color:var(--gr)">97.4%</div><div class="demo-bar2"><div class="demo-b" style="height:95%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:98%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:100%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:96%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:97%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:99%;background:rgba(15,186,129,.3)"></div><div class="demo-b" style="height:97%;background:rgba(15,186,129,.3)"></div></div></div>
-        <div class="demo-card"><div class="demo-card-lbl">Active Errors</div><div class="demo-card-val" style="color:var(--re)">2</div><div class="demo-bar2"><div class="demo-b" style="height:20%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:10%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:30%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:5%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:15%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:25%;background:rgba(240,68,68,.3)"></div><div class="demo-b" style="height:40%;background:rgba(240,68,68,.3)"></div></div></div>
-      </div>
-      <div style="padding:0 18px 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div style="background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:12px">
-          <div style="font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Live Execution Log</div>
-          <div class="demo-row"><div class="demo-dot2" style="background:var(--gr)"></div><div class="demo-row-name">Lead Enrichment</div><span class="demo-row-pill demo-ok">Success</span></div>
-          <div class="demo-row"><div class="demo-dot2" style="background:var(--re)"></div><div class="demo-row-name">Email Notifier</div><span class="demo-row-pill demo-er">Failed</span></div>
-          <div class="demo-row"><div class="demo-dot2" style="background:var(--gr)"></div><div class="demo-row-name">CRM Sync</div><span class="demo-row-pill demo-ok">Success</span></div>
+      <!-- Step 1 -->
+      <div id="su-s1">
+        <div class="auth-card-title">Create your account</div>
+        <div class="auth-card-sub">Your account is securely stored in our database — access from any device, anywhere.</div>
+        <div class="fg"><div class="fl">Full Name</div><input class="fi" type="text" id="su-name" placeholder="Your name"/></div>
+        <div class="fg"><div class="fl">Email Address</div><input class="fi" type="email" id="su-email" placeholder="you@company.com"/></div>
+        <div class="fg">
+          <div class="fl">Password</div>
+          <div class="fi-wrap"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this.value)"/><span class="fi-icon" onclick="togglePw('su-pass',this)">👁</span></div>
+          <div class="fi-hint" id="passHint">Enter a password</div>
         </div>
-        <div style="background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:12px">
-          <div style="font-size:9px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Workflow Health</div>
-          <div class="demo-row"><div class="demo-row-name">Data Backup</div><span style="font-size:10px;color:var(--gr);font-family:'JetBrains Mono',monospace">100%</span></div>
-          <div class="demo-row"><div class="demo-row-name">Invoice Gen</div><span style="font-size:10px;color:var(--ye);font-family:'JetBrains Mono',monospace">78%</span></div>
-          <div class="demo-row"><div class="demo-row-name">Email Notifier</div><span style="font-size:10px;color:var(--re);font-family:'JetBrains Mono',monospace">45%</span></div>
+        <div class="fg"><div class="fl">Confirm Password</div><div class="fi-wrap"><input class="fi" type="password" id="su-pass2" placeholder="Repeat password"/><span class="fi-icon" onclick="togglePw('su-pass2',this)">👁</span></div></div>
+        <button class="auth-btn" id="su-btn1" onclick="suStep1()">Continue →</button>
+        <div class="auth-err" id="su-err1"></div>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="su-s2" style="display:none">
+        <div class="auth-card-title">Connect your n8n</div>
+        <div class="auth-card-sub">Enter your Cloudflare Worker URL. Saved permanently to your account in Supabase — never ask again.</div>
+        <div class="fg">
+          <div class="fl">Cloudflare Worker URL</div>
+          <input class="fi" type="text" id="su-worker" placeholder="https://flowpulse.yourname.workers.dev"/>
+          <div class="fi-hint">From your Cloudflare Workers dashboard. Saved once, works forever.</div>
+        </div>
+        <button class="auth-btn" id="su-btn2" onclick="suStep2()">Verify & Save →</button>
+        <button class="auth-btn secondary" onclick="suSkip()">Skip for now →</button>
+        <div class="auth-err" id="su-err2"></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="su-s3" style="display:none;text-align:center">
+        <div style="font-size:52px;margin-bottom:16px">🎉</div>
+        <div class="auth-card-title" style="text-align:center">You're all set!</div>
+        <div class="auth-card-sub" style="text-align:center;margin-bottom:24px">Account created in Supabase. Your Worker URL is saved — log in from any device and it loads automatically.</div>
+        <button class="auth-btn" onclick="goApp()">Open Dashboard →</button>
+      </div>
+
+      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginPage" style="display:none">
+  <div class="auth-bg"><div class="orb a"></div><div class="orb b"></div></div>
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">⚡</div>
+      <div><div class="auth-logo-name">Flow<span>Pulse</span></div><div class="auth-logo-tag">n8n Automation Intelligence</div></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-card-title">Welcome back</div>
+      <div class="auth-card-sub">Sign in to your FlowPulse account. Your Worker URL loads automatically from Supabase.</div>
+      <div class="fg"><div class="fl">Email Address</div><input class="fi" type="email" id="li-email" placeholder="you@company.com"/></div>
+      <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="li-pass" placeholder="Your password"/><span class="fi-icon" onclick="togglePw('li-pass',this)">👁</span></div></div>
+      <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-err" id="li-err"></div>
+      <div class="auth-switch">Don't have an account? <a onclick="showSignup()">Sign up free</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwaBanner">
+  <div class="pwa-banner-icon">⚡</div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Install FlowPulse</div>
+    <div class="pwa-banner-sub">Add to home screen for quick access</div>
+  </div>
+  <div class="pwa-banner-btns">
+    <button class="pwa-install-btn" onclick="installPWA()">Install</button>
+    <button class="pwa-dismiss-btn" onclick="dismissPWA()">Later</button>
+  </div>
+</div>
+
+<!-- MOBILE TOPBAR -->
+<div class="mob-topbar" id="mobTopbar">
+  <div class="mob-logo">
+    <div class="mob-logo-icon">⚡</div>
+    <div class="mob-logo-name">Flow<span>Pulse</span></div>
+  </div>
+  <div class="mob-topbar-r">
+    <div class="mob-live"><div class="mob-ldot"></div>Live</div>
+    <div class="mob-sync-btn" onclick="fetchData(true)" title="Sync">↻</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appPage">
+  <div class="rbar" id="rbar"></div>
+  <aside class="sidebar">
+    <div class="slogo"><div class="slogo-icon">⚡</div><div class="slogo-text">Flow<span>Pulse</span></div><span class="sbadge">LIVE</span></div>
+    <nav class="snav">
+      <div class="snav-sec">Overview</div>
+      <div class="ni active" onclick="navTo('dashboard',this)"><span class="ic">⬡</span>Dashboard</div>
+      <div class="ni" onclick="navTo('workflows',this)"><span class="ic">⟳</span>Workflows</div>
+      <div class="ni" onclick="navTo('executions',this)"><span class="ic">≡</span>Executions</div>
+      <div class="snav-sec">Monitor</div>
+      <div class="ni" onclick="navTo('health',this)"><span class="ic">◎</span>Health Scores</div>
+      <div class="ni" onclick="navTo('alerts',this)"><span class="ic">⚠</span>Alerts <span class="nbadge" id="aBadge">0</span></div>
+      <div class="ni" onclick="navTo('analytics',this)"><span class="ic">↗</span>Analytics</div>
+      <div class="snav-sec">Config</div>
+      <div class="ni" onclick="navTo('statuspage',this)"><span class="ic">🌐</span>Client Status Page</div>
+      <div class="ni" onclick="navTo('settings',this)"><span class="ic">◈</span>Account Settings</div>
+    </nav>
+    <div class="sbot">
+      <div class="urow">
+        <div class="ava" id="sAva">?</div>
+        <div class="uinfo"><div class="uname" id="sName">—</div><div class="uemail" id="sEmail">—</div></div>
+        <div class="lout" title="Sign out" onclick="logout()">⏻</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="tb-title" id="pageTitle">Dashboard <span class="sub">/ Live Overview</span></div>
+      <div class="tb-r">
+        <div class="srch"><span style="color:var(--mu);font-size:12px">⌕</span><input type="text" placeholder="Search…" id="srch" oninput="handleSearch()"/></div>
+        <div class="lpill"><div class="ldot"></div>Live</div>
+        <button class="btn btn-p" onclick="fetchData(true)">↻ Refresh</button>
+        <button class="btn" onclick="navTo('settings',null)">⚙ Settings</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div id="talert" class="talert" style="display:none"><span>⚠️</span><div id="talertTxt" style="flex:1"></div><span class="talert-x" onclick="this.parentElement.style.display='none'">×</span></div>
+      <div class="stats">
+        <div class="stat"><div class="st-top"><div class="st-lbl">Unique Workflows</div><div class="st-ico ico-b">⟳</div></div><div class="st-val" id="sWf">—</div><div class="st-note cnm" id="sWfN">Waiting</div><div class="spark" id="spWf"></div></div>
+        <div class="stat"><div class="st-top"><div class="st-lbl">Total Executions</div><div class="st-ico ico-g">▶</div></div><div class="st-val" id="sEx">—</div><div class="st-note cnm" id="sExN">Waiting</div><div class="spark" id="spEx"></div></div>
+        <div class="stat"><div class="st-top"><div class="st-lbl">Success Rate</div><div class="st-ico ico-g">✓</div></div><div class="st-val" id="sSr">—</div><div class="st-note cnm" id="sSrN">Waiting</div><div class="spark" id="spSr"></div></div>
+        <div class="stat"><div class="st-top"><div class="st-lbl">Active Errors</div><div class="st-ico ico-r">⚠</div></div><div class="st-val" id="sEr" style="color:var(--re)">—</div><div class="st-note cnm" id="sErN">Waiting</div><div class="spark" id="spEr"></div></div>
+      </div>
+      <div class="g2">
+        <div class="card card-last">
+          <div class="ch"><div class="ct">Workflow Executions</div><div class="cm"><span id="lastUp">—</span>&nbsp;<span id="wfCnt" style="color:var(--ac);font-weight:700"></span></div></div>
+          <div class="tabs"><div class="tab active" onclick="setTab(this,'all')">All</div><div class="tab" onclick="setTab(this,'success')">Success</div><div class="tab" onclick="setTab(this,'error')">Errors</div></div>
+          <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Health</th><th>Duration</th><th>Items</th><th>Last Run</th></tr></thead><tbody id="wfBody"></tbody></table></div>
+        </div>
+        <div class="rcol">
+          <div class="card">
+            <div class="ch"><div class="ct">Worker Connection</div><div class="cstat idle" id="cstat"><div class="cdot idle" id="cdot"></div><span id="ctxt">Idle</span></div></div>
+            <div class="connp">
+              <div class="curl" id="curl">No worker configured</div>
+              <div class="wh-lbl" style="margin-top:12px">Your n8n Webhook URL</div>
+              <div class="wh-url-box" id="whUrlBox" onclick="copyWebhook()">Configure worker URL first →</div>
+              <div style="font-size:10px;color:var(--mu2);margin-top:6px">↑ Paste this in your n8n HTTP Request node</div>
+              <div style="margin-top:10px;display:flex;gap:7px">
+                <button class="btn" style="flex:1;justify-content:center" onclick="navTo('settings',null)">⚙ Settings</button>
+                <button class="btn btn-p" style="flex:1;justify-content:center" onclick="fetchData(true)">↻ Sync</button>
+              </div>
+            </div>
+          </div>
+          <div class="card"><div class="ch"><div class="ct">Live Execution Log</div><div class="lpill" style="font-size:9.5px;padding:3px 8px"><div class="ldot"></div>Streaming</div></div><div class="ll" id="logList"><div class="empty"><div class="empty-i">📋</div>Waiting…</div></div></div>
+          <div class="card card-last"><div class="ch"><div class="ct">Workflow Health</div><div class="cm">by success rate</div></div><div class="hl" id="healthList"><div class="empty"><div class="empty-i">❤️</div>No data</div></div></div>
+        </div>
+      </div>
+      <div class="b2" style="margin-top:16px">
+        <div class="card card-last"><div class="ch"><div class="ct">Activity</div><div class="cm">Last 7 days</div></div><div class="act" id="actChart"><div class="empty" style="width:100%;padding:16px">No activity</div></div></div>
+        <div class="card card-last"><div class="ch"><div class="ct">Error Alerts</div><span class="cm" style="color:var(--re)" id="errCnt"></span></div><div class="el" id="errList"><div class="empty"><div class="empty-i">✅</div>No errors</div></div></div>
+      </div>
+    </div>
+
+    <!-- WORKFLOWS -->
+    <div class="page" id="page-workflows">
+      <div class="ch" style="background:var(--s1);border:1px solid var(--b1);border-radius:11px;margin-bottom:16px;padding:15px 17px"><div class="ct">All Workflows</div><div class="cm"><span id="wfPageCount" style="color:var(--ac);font-weight:700"></span></div></div>
+      <div class="wf-grid" id="wfGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div></div>
+    </div>
+
+    <!-- EXECUTIONS -->
+    <div class="page" id="page-executions">
+      <div class="exec-filters"><button class="filter-btn active" onclick="setExecFilter(this,'all')">All</button><button class="filter-btn" onclick="setExecFilter(this,'success')">✅ Success</button><button class="filter-btn" onclick="setExecFilter(this,'error')">❌ Failed</button></div>
+      <div class="card card-last"><div class="ch"><div class="ct">Execution History</div><div class="cm" id="execTotal"></div></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Items</th><th>Error</th><th>Time</th></tr></thead><tbody id="execBody"></tbody></table></div></div>
+    </div>
+
+    <!-- HEALTH -->
+    <div class="page" id="page-health">
+      <div class="health-grid" id="healthGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data yet</div></div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="card card-last"><div class="ch"><div class="ct">Active Alerts</div><div class="cm" id="alertsCount"></div></div><div id="alertsList"><div class="empty"><div class="empty-i">✅</div>No alerts</div></div></div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="analytics-grid">
+        <div class="card card-last"><div class="ch"><div class="ct">Executions Over Time</div><div class="cm">Last 7 days</div></div><div class="big-chart" id="bigChart"></div></div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="analytics-stat"><div class="analytics-stat-val" id="an-total">—</div><div class="analytics-stat-lbl">Total Executions</div></div>
+          <div class="analytics-stat"><div class="analytics-stat-val" id="an-rate" style="color:var(--gr)">—</div><div class="analytics-stat-lbl">Success Rate</div></div>
+          <div class="analytics-stat"><div class="analytics-stat-val" id="an-avg" style="color:var(--ac)">—</div><div class="analytics-stat-lbl">Avg Duration</div></div>
+        </div>
+      </div>
+      <div class="b2">
+        <div class="card card-last"><div class="ch"><div class="ct">Most Active</div></div><div class="top-list" id="topActive"></div></div>
+        <div class="card card-last"><div class="ch"><div class="ct">Most Reliable</div></div><div class="top-list" id="topReliable"></div></div>
+      </div>
+    </div>
+
+    <!-- STATUS PAGE -->
+    <div class="page" id="page-statuspage">
+      <div class="card" style="margin-bottom:16px">
+        <div class="ch"><div class="ct">🌐 Client Status Page</div><div class="cm">Share live workflow status with clients</div></div>
+        <div style="padding:20px">
+          <div style="font-size:13px;color:var(--mu2);line-height:1.7;margin-bottom:18px">
+            Create a public status page and share it with clients. They can see real-time health of only the workflows you choose — no login required.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-p" onclick="openShareModal()">⚡ Create / Edit Status Page</button>
+            <button class="btn" id="viewStatusBtn" onclick="viewStatusPage()" style="display:none">🔗 View My Status Page</button>
+          </div>
+        </div>
+      </div>
+      <div class="card card-last" id="statusPagePreview" style="display:none">
+        <div class="ch"><div class="ct">Your Status Page</div><div class="cm" id="spLinkLabel"></div></div>
+        <div style="padding:16px">
+          <div style="font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Shareable URL</div>
+          <div style="background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:10px 13px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--ac);cursor:pointer;word-break:break-all" id="spLinkBox" onclick="copyStatusLink()">—</div>
+          <div style="font-size:10.5px;color:var(--mu2);margin-top:7px">↑ Click to copy · Share this with your clients</div>
+          <div style="margin-top:14px">
+            <div style="font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Public Workflows</div>
+            <div id="spPublicList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</section>
 
-<!-- FEATURES -->
-<section id="features">
-  <div class="center">
-    <div class="sec-badge">✦ Features</div>
-    <div class="sec-title">Everything you need to<br/>monitor n8n at scale</div>
-    <div class="sec-sub">Built specifically for automation experts who run n8n workflows for clients and businesses.</div>
-  </div>
-  <div class="features-grid">
-    <div class="feat"><div class="feat-icon fi-b">⚡</div><div class="feat-title">Real-Time Monitoring</div><div class="feat-desc">Dashboard auto-refreshes every 10 seconds. See workflow executions as they happen — no page reload needed.</div></div>
-    <div class="feat"><div class="feat-icon fi-g">✅</div><div class="feat-title">Health Scores</div><div class="feat-desc">Every workflow gets a health score based on success rate. Instantly spot which automations need attention.</div></div>
-    <div class="feat"><div class="feat-icon fi-r">🚨</div><div class="feat-title">Instant Error Alerts</div><div class="feat-desc">When a workflow fails, you see it immediately. Error message, failed node name, and full context included.</div></div>
-    <div class="feat"><div class="feat-icon fi-p">📊</div><div class="feat-title">Analytics & Insights</div><div class="feat-desc">Track execution trends over 7 days. See which workflows run most and which are most reliable.</div></div>
-    <div class="feat"><div class="feat-icon fi-y">☁️</div><div class="feat-title">Supabase Auth</div><div class="feat-desc">Your account is securely stored in Supabase. Log in from any device, anywhere — your data follows you.</div></div>
-    <div class="feat"><div class="feat-icon fi-b">🔗</div><div class="feat-title">Works with Any n8n</div><div class="feat-desc">Compatible with n8n Cloud, self-hosted, and trial accounts. Just add one HTTP Request node to your workflows.</div></div>
-  </div>
-</section>
-
-<!-- HOW IT WORKS -->
-<section id="how" style="background:rgba(11,13,16,.5)">
-  <div class="center">
-    <div class="sec-badge">⟳ How it works</div>
-    <div class="sec-title">Set up in under<br/>10 minutes</div>
-    <div class="sec-sub">No code changes to your existing workflows. Just add one node and you're live.</div>
-  </div>
-  <div class="how-grid">
-    <div class="how-step">
-      <div class="how-num">1</div>
-      <div class="how-title">Deploy your Worker</div>
-      <div class="how-desc">Create a free Cloudflare Worker from our template. This becomes your private webhook receiver and data store.</div>
-    </div>
-    <div class="how-step">
-      <div class="how-num">2</div>
-      <div class="how-title">Add one n8n node</div>
-      <div class="how-desc">Add an HTTP Request node at the end of each workflow. Copy your webhook URL from the dashboard and paste it in.</div>
-    </div>
-    <div class="how-step">
-      <div class="how-num">3</div>
-      <div class="how-title">Watch it live</div>
-      <div class="how-desc">Every time your workflow runs, data appears in your FlowPulse dashboard within seconds. That's it.</div>
-    </div>
-  </div>
-</section>
-
-<!-- TESTIMONIALS -->
-<section>
-  <div class="center">
-    <div class="sec-badge">❤️ Loved by automation pros</div>
-    <div class="sec-title">Trusted by n8n experts</div>
-  </div>
-  <div class="testimonials">
-    <div class="tcard">
-      <div class="tcard-text">I manage 30+ workflows for clients. FlowPulse is the first tool that actually shows me when something breaks before my client notices.</div>
-      <div class="tcard-author"><div class="tcard-ava" style="background:linear-gradient(135deg,var(--ac),var(--pu))">AK</div><div><div class="tcard-name">Alex K.</div><div class="tcard-role">Automation Consultant</div></div></div>
-    </div>
-    <div class="tcard">
-      <div class="tcard-text">The health scores are genius. I can immediately see which workflows need attention without digging through n8n logs.</div>
-      <div class="tcard-author"><div class="tcard-ava" style="background:linear-gradient(135deg,var(--gr),var(--ac))">SR</div><div><div class="tcard-name">Sarah R.</div><div class="tcard-role">No-Code Developer</div></div></div>
-    </div>
-    <div class="tcard">
-      <div class="tcard-text">Set it up in 8 minutes. Now I get real-time visibility into all my client automations. Worth every penny of the Pro plan.</div>
-      <div class="tcard-author"><div class="tcard-ava" style="background:linear-gradient(135deg,var(--pu),var(--re))">MJ</div><div><div class="tcard-name">Marcus J.</div><div class="tcard-role">Agency Owner</div></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- PRICING -->
-<section id="pricing">
-  <div class="center">
-    <div class="sec-badge">💳 Pricing</div>
-    <div class="sec-title">Simple, transparent pricing</div>
-    <div class="sec-sub">Start free. Upgrade when you need more power. Cancel anytime.</div>
-  </div>
-  <div class="pricing-grid">
-
-    <!-- FREE -->
-    <div class="plan">
-      <div class="plan-name">Free</div>
-      <div class="plan-price">$0<span>/mo</span></div>
-      <div class="plan-desc">Perfect for personal projects and testing.</div>
-      <div class="plan-features">
-        <div class="pf"><div class="pf-check">✓</div>Up to 5 workflows</div>
-        <div class="pf"><div class="pf-check">✓</div>Real-time dashboard</div>
-        <div class="pf"><div class="pf-check">✓</div>7-day history</div>
-        <div class="pf"><div class="pf-check">✓</div>Health scores</div>
-        <div class="pf dim"><div class="pf-check pf-x">✕</div>Email alerts</div>
-        <div class="pf dim"><div class="pf-check pf-x">✕</div>Client status pages</div>
-        <div class="pf dim"><div class="pf-check pf-x">✕</div>Priority support</div>
+    <div class="page" id="page-settings">
+      <div class="settings-section">
+        <div class="settings-title">Account — Stored in Supabase ☁️</div>
+        <div class="settings-card">
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Name</div></div><div class="settings-val" id="set-name">—</div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Email</div></div><div class="settings-val" id="set-email">—</div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">User ID</div><div class="settings-row-desc">Supabase Auth UUID</div></div><div class="settings-val" id="set-uid" style="font-size:10px">—</div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Sign Out</div><div class="settings-row-desc">Clears session from this device only</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="logout()">Sign Out</button></div>
+        </div>
       </div>
-      <button class="plan-btn plan-btn-free" onclick="window.location.href='app.html'">Get started free →</button>
-    </div>
-
-    <!-- PRO -->
-    <div class="plan popular">
-      <div class="plan-badge">MOST POPULAR</div>
-      <div class="plan-name">Pro</div>
-      <div class="plan-price">$19<span>/mo</span></div>
-      <div class="plan-desc">For freelancers and automation professionals.</div>
-      <div class="plan-features">
-        <div class="pf"><div class="pf-check">✓</div>Unlimited workflows</div>
-        <div class="pf"><div class="pf-check">✓</div>Real-time dashboard</div>
-        <div class="pf"><div class="pf-check">✓</div>30-day history</div>
-        <div class="pf"><div class="pf-check">✓</div>Health scores</div>
-        <div class="pf"><div class="pf-check">✓</div>Email alerts on failure</div>
-        <div class="pf"><div class="pf-check">✓</div>Client status pages</div>
-        <div class="pf dim"><div class="pf-check pf-x">✕</div>Priority support</div>
+      <div class="settings-section">
+        <div class="settings-title">n8n Connection — Saved in Supabase ☁️</div>
+        <div class="settings-card">
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Worker URL</div><div class="settings-row-desc">Cloudflare proxy — saved to your Supabase profile</div></div><div style="display:flex;gap:8px;align-items:center"><div class="settings-val" id="set-worker">Not set</div><button class="btn" onclick="showModal()">Edit</button></div></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Webhook URL</div><div class="settings-row-desc">Paste in your n8n HTTP Request node</div></div><button class="btn" onclick="copyWebhook()">📋 Copy</button></div>
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Status</div></div><div class="cstat idle" id="settingsConnStat"><div class="cdot idle" id="settingsConnDot"></div><span id="settingsConnTxt">Idle</span></div></div>
+        </div>
       </div>
-      <button class="plan-btn plan-btn-pro" onclick="openCheckout('pro')">Start Pro — $19/mo →</button>
-    </div>
-
-    <!-- AGENCY -->
-    <div class="plan">
-      <div class="plan-name">Agency</div>
-      <div class="plan-price">$49<span>/mo</span></div>
-      <div class="plan-desc">For agencies managing client automations.</div>
-      <div class="plan-features">
-        <div class="pf"><div class="pf-check">✓</div>Everything in Pro</div>
-        <div class="pf"><div class="pf-check">✓</div>Up to 10 team members</div>
-        <div class="pf"><div class="pf-check">✓</div>90-day history</div>
-        <div class="pf"><div class="pf-check">✓</div>White-label dashboard</div>
-        <div class="pf"><div class="pf-check">✓</div>Client status pages</div>
-        <div class="pf"><div class="pf-check">✓</div>Priority support</div>
-        <div class="pf"><div class="pf-check">✓</div>Custom domain</div>
-      </div>
-      <button class="plan-btn plan-btn-agency" onclick="openCheckout('agency')">Start Agency — $49/mo →</button>
-    </div>
-
-  </div>
-  <div class="pricing-note"><b>✓ No credit card required</b> to start free &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; Secure payments via Stripe</div>
-</section>
-
-<!-- FAQ -->
-<section style="padding-top:20px">
-  <div class="center">
-    <div class="sec-badge">❓ FAQ</div>
-    <div class="sec-title">Common questions</div>
-  </div>
-  <div class="faq-list">
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Does this work with n8n Cloud trial? <span class="faq-arrow">↓</span></div><div class="faq-a">Yes! FlowPulse works with n8n trial accounts. You just need to add an HTTP Request node to your workflows — no n8n API access required.</div></div>
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Do I need to change my existing workflows? <span class="faq-arrow">↓</span></div><div class="faq-a">Minimal change. You just add one HTTP Request node at the end of each workflow. It takes about 2 minutes per workflow and doesn't affect anything else.</div></div>
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Where is my data stored? <span class="faq-arrow">↓</span></div><div class="faq-a">Your account is stored in Supabase (secure cloud database). Your workflow execution data is stored in your own private Cloudflare Worker KV — we never see it.</div></div>
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">What is the Cloudflare Worker for? <span class="faq-arrow">↓</span></div><div class="faq-a">The Cloudflare Worker acts as a private middleman. Your n8n workflows send data to it, and your dashboard reads from it. It's completely free on Cloudflare's free tier.</div></div>
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Can I cancel my subscription? <span class="faq-arrow">↓</span></div><div class="faq-a">Yes, anytime. Cancel from your account settings and you won't be charged again. You keep access until the end of your billing period.</div></div>
-    <div class="faq-item" onclick="toggleFaq(this)"><div class="faq-q">Is Stripe payment secure? <span class="faq-arrow">↓</span></div><div class="faq-a">Yes. All payments are processed by Stripe — we never store your card details. Stripe is used by millions of businesses worldwide and is PCI-DSS compliant.</div></div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="cta-section">
-  <div class="cta-glow"></div>
-  <div class="sec-badge" style="margin-bottom:20px">🚀 Get started today</div>
-  <div class="cta-title">Stop guessing.<br/>Start <span style="background:linear-gradient(135deg,var(--ac),var(--pu));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">monitoring.</span></div>
-  <div class="cta-sub">Join automation experts who never miss a workflow failure.</div>
-  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
-    <a href="app.html" class="btn-hero btn-primary">Start for free →</a>
-    <a href="#pricing" class="btn-hero btn-secondary">See pricing</a>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <div class="foot-logo"><div style="width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:13px">⚡</div>Flow<span>Pulse</span></div>
-  <div class="foot-links">
-    <span class="foot-link" onclick="window.location.href='app.html'">Dashboard</span>
-    <a href="#pricing" class="foot-link">Pricing</a>
-    <a href="#faq" class="foot-link">FAQ</a>
-  </div>
-  <div class="foot-copy">© 2025 FlowPulse. All rights reserved.</div>
-</footer>
-
-<!-- STRIPE CHECKOUT MODAL -->
-<div class="stripe-modal-bg" id="checkoutModal" onclick="closeCheckoutOut(event)">
-  <div class="stripe-modal">
-    <div class="sm-header">
-      <div>
-        <div class="sm-plan-name" id="sm-plan-name">Pro Plan</div>
-        <div class="sm-plan-price" id="sm-plan-price">$19<span style="font-size:14px;color:var(--mu2);font-weight:500">/month</span></div>
-      </div>
-      <div class="sm-close" onclick="closeCheckout()">×</div>
-    </div>
-    <div class="sm-features" id="sm-features"></div>
-    <div class="fg"><div class="fl">Full Name</div><input class="fi" type="text" id="co-name" placeholder="Your name"/></div>
-    <div class="fg"><div class="fl">Email Address</div><input class="fi" type="email" id="co-email" placeholder="you@company.com"/></div>
-    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:13px 14px;margin-bottom:14px">
-      <div style="font-size:10px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Payment details</div>
-      <div id="stripe-card-element" style="min-height:22px;color:var(--tx);font-size:13px">
-        <!-- Stripe Elements mount here -->
-        <div style="color:var(--mu2);font-size:12px;font-family:'JetBrains Mono',monospace">🔒 Stripe card input will appear here<br/><span style="font-size:10px;color:var(--mu)">Add your Stripe publishable key to enable payments</span></div>
+      <div class="settings-section">
+        <div class="settings-title">Data</div>
+        <div class="settings-card">
+          <div class="settings-row"><div class="settings-row-left"><div class="settings-row-name">Clear Execution Data</div><div class="settings-row-desc">Deletes all records from Cloudflare KV</div></div><button class="btn" style="color:var(--re);border-color:rgba(240,68,68,.2)" onclick="clearData()">Clear</button></div>
+        </div>
       </div>
     </div>
-    <button class="stripe-btn" id="stripe-pay-btn" onclick="handlePayment()">
-      <span id="stripe-btn-txt">Subscribe now →</span>
-    </button>
-    <div class="stripe-note">🔒 Secured by Stripe · Cancel anytime</div>
+
+  </main>
+
+  <!-- MOBILE BOTTOM NAV -->
+  <nav class="mob-nav">
+    <div class="mob-nav-inner">
+      <div class="mn-item active" id="mn-dashboard" onclick="navTo('dashboard',null);setMobNav('dashboard')">
+        <div class="mn-icon">⬡</div><div class="mn-lbl">Home</div>
+      </div>
+      <div class="mn-item" id="mn-workflows" onclick="navTo('workflows',null);setMobNav('workflows')">
+        <div class="mn-icon">⟳</div><div class="mn-lbl">Workflows</div>
+      </div>
+      <div class="mn-item" id="mn-alerts" onclick="navTo('alerts',null);setMobNav('alerts')">
+        <div class="mn-icon">⚠</div><div class="mn-lbl">Alerts</div>
+        <div class="mn-badge" id="mnBadge" style="display:none">0</div>
+      </div>
+      <div class="mn-item" id="mn-analytics" onclick="navTo('analytics',null);setMobNav('analytics')">
+        <div class="mn-icon">↗</div><div class="mn-lbl">Analytics</div>
+      </div>
+      <div class="mn-item" id="mn-settings" onclick="navTo('settings',null);setMobNav('settings')">
+        <div class="mn-icon">◈</div><div class="mn-lbl">Settings</div>
+      </div>
+    </div>
+  </nav>
+
+</div>
+
+<!-- MODAL -->
+<div class="mbg" id="modal" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="mh">⚡ Update Worker URL</div>
+    <div class="ms">Saved permanently to your Supabase profile. Works on any device.</div>
+    <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" type="text" id="mWorker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
+    <div class="mac"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-p" id="mSaveBtn" onclick="saveWorkerUrl()">Save to Supabase →</button></div>
+  </div>
+</div>
+
+<!-- SHARE / STATUS PAGE MODAL -->
+<div class="mbg" id="shareModal" onclick="closeShareOut(event)">
+  <div class="modal" style="width:520px">
+    <div class="mh">🌐 Create Client Status Page</div>
+    <div class="ms">Choose which workflows to make public. Clients see live health without logging in.</div>
+    <div class="fg"><div class="fl">Page Title</div><input class="fi" type="text" id="sp-title" placeholder="e.g. ACME Corp — Automation Status"/></div>
+    <div class="fg"><div class="fl">Description</div><input class="fi" type="text" id="sp-desc" placeholder="Real-time status of your automations"/></div>
+    <div style="margin-bottom:16px">
+      <div class="fl" style="margin-bottom:8px">Select Workflows to Show</div>
+      <div id="sp-wf-list" style="display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:10px">
+        <div style="color:var(--mu2);font-size:12px;padding:8px">No workflows yet — run some executions first</div>
+      </div>
+    </div>
+    <div class="mac">
+      <button class="btn" onclick="closeShareModal()">Cancel</button>
+      <button class="btn btn-p" id="spSaveBtn" onclick="saveStatusPage()">Save & Generate Link →</button>
+    </div>
   </div>
 </div>
 
 <div class="tw" id="tw"></div>
 
 <script>
-// ── STRIPE CONFIG ─────────────────────────────────────
-// TODO: Replace with your real Stripe publishable key
-// Get it from: https://dashboard.stripe.com/apikeys
-const STRIPE_PK = 'pk_live_YOUR_STRIPE_PUBLISHABLE_KEY';
+// ═══════════════════════════════════════════════════════
+// SUPABASE INIT
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://haszbfvjlxkwrrqfgqum.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3piZnZqbHhrd3JycWZncXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTgxMzEsImV4cCI6MjA4ODU3NDEzMX0.-60WLt-U37aext9eKlOhnYbH0fuHmexIdLMzMvyZMjs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// TODO: Replace with your real Stripe Price IDs
-// Create them at: https://dashboard.stripe.com/products
-const STRIPE_PRICES = {
-  pro:    'price_YOUR_PRO_PRICE_ID',     // $19/mo
-  agency: 'price_YOUR_AGENCY_PRICE_ID',  // $49/mo
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+const S = {
+  user: null,        // Supabase auth user
+  profile: null,     // profiles table row
+  executions: [],
+  tab: 'all', execFilter: 'all', searchQ: '',
+  timer: null, currentPage: 'dashboard',
+  suTemp: {},        // temp during signup
 };
 
-const PLAN_DETAILS = {
-  pro: {
-    name: 'Pro Plan', price: '$19', color: 'pro',
-    features: ['Unlimited workflows', '30-day history', 'Email alerts on failure', 'Client status pages'],
-  },
-  agency: {
-    name: 'Agency Plan', price: '$49', color: 'agency',
-    features: ['Everything in Pro', 'Up to 10 team members', '90-day history', 'White-label dashboard', 'Priority support'],
-  },
-};
-
-let currentPlan = null;
-
-function openCheckout(plan) {
-  currentPlan = plan;
-  const d = PLAN_DETAILS[plan];
-  document.getElementById('sm-plan-name').textContent = d.name;
-  document.getElementById('sm-plan-price').innerHTML = `${d.price}<span style="font-size:14px;color:var(--mu2);font-weight:500">/month</span>`;
-  document.getElementById('sm-features').innerHTML = d.features.map(f=>`<div class="sm-feat"><span class="sm-feat-check">✓</span>${f}</div>`).join('');
-  document.getElementById('stripe-pay-btn').className = `stripe-btn ${d.color}`;
-  document.getElementById('checkoutModal').classList.add('open');
-
-  // Pre-fill email if user came from dashboard
-  const urlParams = new URLSearchParams(window.location.search);
-  const email = urlParams.get('email');
-  if (email) document.getElementById('co-email').value = email;
+// ═══════════════════════════════════════════════════════
+// INIT — check existing Supabase session
+// ═══════════════════════════════════════════════════════
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    S.user = session.user;
+    await loadProfile();
+    hide('loadingPage');
+    showApp();
+  } else {
+    hide('loadingPage');
+    showLogin();
+  }
 }
 
-function closeCheckout() { document.getElementById('checkoutModal').classList.remove('open'); }
-function closeCheckoutOut(e) { if(e.target.id==='checkoutModal') closeCheckout(); }
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', S.user.id).single();
+  S.profile = data || {};
+}
 
-async function handlePayment() {
-  const name  = document.getElementById('co-name').value.trim();
-  const email = document.getElementById('co-email').value.trim();
-  const btn   = document.getElementById('stripe-pay-btn');
-  const txt   = document.getElementById('stripe-btn-txt');
+// ═══════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════
+function showLogin()  { hide('signupPage'); hide('appPage'); show('loginPage'); }
+function showSignup() { hide('loginPage');  hide('appPage'); show('signupPage'); resetSignup(); }
+function goApp()      { hide('signupPage'); hide('loginPage'); showApp(); }
 
-  if (!name)  return toast('Enter your name','er');
-  if (!email || !email.includes('@')) return toast('Enter a valid email','er');
+// ═══════════════════════════════════════════════════════
+// SIGNUP — 3 steps
+// ═══════════════════════════════════════════════════════
+function resetSignup() {
+  show('su-s1'); hide('su-s2'); hide('su-s3'); setStep(1);
+  document.getElementById('su-name').value='';
+  document.getElementById('su-email').value='';
+  document.getElementById('su-pass').value='';
+  document.getElementById('su-pass2').value='';
+  document.getElementById('su-err1').style.display='none';
+}
 
-  // Check if Stripe is configured
-  if (STRIPE_PK.includes('YOUR_STRIPE')) {
-    toast('⚠ Stripe not configured yet — see setup instructions below','er');
-    showStripeInstructions();
-    return;
-  }
+function setStep(n) {
+  [1,2,3].forEach(i=>{
+    const d=document.getElementById('sd'+i);
+    if(i<n){d.textContent='✓';d.className='step-dot done';}
+    else if(i===n){d.textContent=i;d.className='step-dot active';}
+    else{d.textContent=i;d.className='step-dot';}
+  });
+}
 
-  btn.disabled = true;
-  txt.innerHTML = '<span class="spin"></span> Redirecting to Stripe…';
+function checkStrength(v) {
+  const h=document.getElementById('passHint');
+  if(!v){h.textContent='Enter a password';h.className='fi-hint';return;}
+  if(v.length<8){h.textContent='Too short — need 8+';h.className='fi-hint er';return;}
+  if(!/[A-Z]/.test(v)||!/[0-9]/.test(v)){h.textContent='Medium — add capitals & numbers';h.className='fi-hint';return;}
+  h.textContent='✓ Strong password';h.className='fi-hint ok';
+}
+
+async function suStep1() {
+  const name  = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const pass  = document.getElementById('su-pass').value;
+  const pass2 = document.getElementById('su-pass2').value;
+  errHide('su-err1');
+
+  if (!name)   return errShow('su-err1','Enter your name.');
+  if (!email || !email.includes('@')) return errShow('su-err1','Enter a valid email.');
+  if (pass.length < 8) return errShow('su-err1','Password must be 8+ characters.');
+  if (pass !== pass2)  return errShow('su-err1','Passwords do not match.');
+
+  const btn = document.getElementById('su-btn1');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Creating account…';
+
+  // Supabase signup
+  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  btn.disabled=false; btn.innerHTML='Continue →';
+
+  if (error) return errShow('su-err1', error.message);
+
+  S.user = data.user;
+  S.suTemp = { name };
+
+  // Save name to profile immediately
+  await sb.from('profiles').upsert({ id: S.user.id, name, worker_url: '' });
+  await loadProfile();
+
+  // Go to step 2
+  hide('su-s1'); show('su-s2'); setStep(2);
+}
+
+async function suStep2() {
+  const worker = document.getElementById('su-worker').value.trim().replace(/\/$/,'');
+  if (!worker) return errShow('su-err2','Enter your Cloudflare Worker URL.');
+  if (!worker.startsWith('http')) return errShow('su-err2','URL must start with https://');
+
+  const btn = document.getElementById('su-btn2');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Verifying connection…';
 
   try {
-    // Use Stripe Checkout (hosted page — simplest integration)
-    const stripe = Stripe(STRIPE_PK);
-    const { error } = await stripe.redirectToCheckout({
-      lineItems: [{ price: STRIPE_PRICES[currentPlan], quantity: 1 }],
-      mode: 'subscription',
-      customerEmail: email,
-      successUrl: window.location.origin + '/app.html?upgraded=true',
-      cancelUrl: window.location.href,
-    });
-    if (error) throw new Error(error.message);
+    const res = await fetch(worker + '/ping');
+    const data = await res.json();
+    if (!data.ok) throw new Error('Worker not responding');
   } catch(e) {
-    btn.disabled = false;
-    txt.textContent = 'Subscribe now →';
-    toast('Payment error: ' + e.message, 'er');
+    btn.disabled=false; btn.innerHTML='Verify & Save →';
+    return errShow('su-err2','Cannot reach Worker. Check URL and make sure it is deployed.');
+  }
+
+  // Save worker_url to Supabase profile
+  const { error } = await sb.from('profiles').upsert({ id: S.user.id, name: S.suTemp.name, worker_url: worker });
+  btn.disabled=false; btn.innerHTML='Verify & Save →';
+
+  if (error) return errShow('su-err2', 'Saved locally but could not save to Supabase: ' + error.message);
+  await loadProfile();
+
+  hide('su-s2'); show('su-s3'); setStep(3);
+}
+
+async function suSkip() {
+  hide('su-s2'); show('su-s3'); setStep(3);
+}
+
+// ═══════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('li-email').value.trim();
+  const pass  = document.getElementById('li-pass').value;
+  const btn   = document.getElementById('li-btn');
+  errHide('li-err');
+
+  if (!email || !email.includes('@')) return errShow('li-err','Enter a valid email.');
+  if (!pass) return errShow('li-err','Enter your password.');
+
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Signing in…';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled=false; btn.innerHTML='Sign In →';
+
+  if (error) return errShow('li-err', error.message === 'Invalid login credentials' ? 'Incorrect email or password.' : error.message);
+
+  S.user = data.user;
+  await loadProfile();
+  showApp();
+}
+
+// ═══════════════════════════════════════════════════════
+// SHOW APP
+// ═══════════════════════════════════════════════════════
+function showApp() {
+  hide('loginPage'); hide('signupPage');
+  show('appPage');
+
+  const name  = S.profile?.name || S.user?.email?.split('@')[0] || 'User';
+  const email = S.user?.email || '—';
+  const workerUrl = S.profile?.worker_url || '';
+
+  document.getElementById('sAva').textContent  = name.slice(0,2).toUpperCase();
+  document.getElementById('sName').textContent = name;
+  document.getElementById('sEmail').textContent= email;
+  document.getElementById('set-name').textContent   = name;
+  document.getElementById('set-email').textContent  = email;
+  document.getElementById('set-uid').textContent    = S.user?.id?.slice(0,18)+'…' || '—';
+  document.getElementById('set-worker').textContent = workerUrl || 'Not set';
+  document.getElementById('mWorker').value = workerUrl;
+
+  updateConnUI();
+
+  if (workerUrl) {
+    fetchData(true);
+    startTimer();
+    loadStatusPage();
+  } else {
+    toast('Welcome! Add your Worker URL in Account Settings to start. ⚡','in');
   }
 }
 
-function showStripeInstructions() {
-  const existing = document.getElementById('stripe-setup-box');
-  if (existing) { existing.scrollIntoView({behavior:'smooth'}); return; }
-
-  const box = document.createElement('div');
-  box.id = 'stripe-setup-box';
-  box.style.cssText = 'background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:12px;padding:20px;margin:20px 5vw;font-size:12.5px;line-height:1.8';
-  box.innerHTML = `
-    <div style="font-weight:800;font-size:14px;margin-bottom:10px;color:#f59e0b">⚙ Stripe Setup Instructions</div>
-    <div style="color:var(--mu2)">
-      <b style="color:var(--tx)">Step 1:</b> Create a free Stripe account at <a href="https://stripe.com" target="_blank" style="color:var(--ac)">stripe.com</a><br/>
-      <b style="color:var(--tx)">Step 2:</b> Go to Dashboard → API Keys → copy your <b>Publishable key</b><br/>
-      <b style="color:var(--tx)">Step 3:</b> Go to Products → Create two products: <b>Pro $19/mo</b> and <b>Agency $49/mo</b><br/>
-      <b style="color:var(--tx)">Step 4:</b> Copy the Price IDs (start with <code style="color:var(--ac)">price_</code>)<br/>
-      <b style="color:var(--tx)">Step 5:</b> Replace <code style="color:var(--ac)">STRIPE_PK</code> and <code style="color:var(--ac)">STRIPE_PRICES</code> at the top of this file<br/>
-      <b style="color:var(--tx)">Step 6:</b> Add the Stripe.js script: uncomment it in the &lt;head&gt; section
-    </div>
-  `;
-  document.querySelector('.pricing-note').after(box);
-  box.scrollIntoView({behavior:'smooth'});
+async function logout() {
+  await sb.auth.signOut();
+  clearInterval(S.timer);
+  S.user=null; S.profile=null; S.executions=[];
+  hide('appPage');
+  showLogin();
 }
 
-// ── FAQ ───────────────────────────────────────────────
-function toggleFaq(el) { el.classList.toggle('open'); }
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function navTo(page,el){
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(el) el.classList.add('active');
+  else document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('pageTitle').innerHTML=pageTitles[page]||page;
+  S.currentPage=page;
+  renderPage(page);
+}
+function renderPage(p){if(p==='workflows')renderWFPage();if(p==='executions')renderExecPage();if(p==='health')renderHealthPage();if(p==='alerts')renderAlertsPage();if(p==='analytics')renderAnalyticsPage();if(p==='settings')renderSettingsPage();}
 
-// ── TOAST ─────────────────────────────────────────────
-function toast(msg, type='ok') {
-  const w=document.getElementById('tw');
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.innerHTML=`${type==='ok'?'✅':'❌'} ${msg}`;
-  w.appendChild(el);
-  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},3500);
+// ═══════════════════════════════════════════════════════
+// FETCH DATA
+// ═══════════════════════════════════════════════════════
+async function fetchData(bar=false){
+  const w=S.profile?.worker_url;
+  if(!w) return;
+  if(bar) animBar();
+  setConn('idle','Syncing…');
+  try{
+    const res=await fetch(w+'/executions');
+    const data=await res.json();
+    S.executions=data.executions||[];
+    setConn('ok','Connected');
+    document.getElementById('curl').textContent=w;
+    document.getElementById('lastUp').textContent='Updated just now';
+    renderAll();
+    if(S.currentPage!=='dashboard') renderPage(S.currentPage);
+  }catch(e){
+    setConn('er','Error: '+e.message);
+    toast('Fetch failed — check Worker URL','er');
+  }
+}
+function startTimer(){clearInterval(S.timer);S.timer=setInterval(()=>fetchData(),10000);}
+function animBar(){const b=document.getElementById('rbar');b.classList.remove('go','done');void b.offsetWidth;b.classList.add('go');setTimeout(()=>{b.classList.remove('go');b.classList.add('done');setTimeout(()=>b.classList.remove('done'),400);},9800);}
+
+// ═══════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════
+function renderAll(){renderStats();renderWorkflows();renderLog();renderHealth();renderActivity();renderErrors();}
+function getGrouped(){const g={};S.executions.forEach(e=>{if(!g[e.workflowName])g[e.workflowName]=[];g[e.workflowName].push(e);});return g;}
+
+function renderStats(){
+  const exs=S.executions,names=[...new Set(exs.map(e=>e.workflowName))];
+  const total=exs.length,succ=exs.filter(e=>e.status==='success').length,errs=exs.filter(e=>e.status==='error').length;
+  const rate=total>0?Math.round((succ/total)*1000)/10:0;
+  const today=exs.filter(e=>isToday(new Date(e.receivedAt))).length;
+  set('sWf',names.length||'—');set('sEx',total?total.toLocaleString():'—');
+  document.getElementById('sSr').innerHTML=total?`${rate}<span style="font-size:15px;color:var(--mu)">%</span>`:'—';
+  set('sEr',errs||'—'); document.getElementById('sEr').style.color=errs?'var(--re)':'var(--tx)';
+  set('sWfN',names.length?`<span class="cup">${names.length} unique</span>`:'<span class="cnm">No data yet</span>');
+  set('sExN',today?`<span class="cup">↑ ${today} today</span>`:'<span class="cnm">No executions</span>');
+  set('sSrN',rate>=90?'<span class="cup">↑ Healthy</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data</span>');
+  set('sErN',errs>0?`<span class="cdn">↑ ${errs} failed</span>`:total?'<span class="cup">All clear</span>':'<span class="cnm">No data</span>');
+  set('aBadge',errs);
+  updateMobBadge(errs);
+  if(errs>0){set('talertTxt',`<b>${errs} execution${errs>1?'s':''} failed</b> — check Alerts.`);document.getElementById('talert').style.display='flex';}
+  spark('spWf',Array.from({length:7},(_,i)=>i<6?Math.random()*names.length*.8+names.length*.2:names.length),'b');
+  spark('spEx',mkSpark(exs),'g');spark('spSr',[rate*.9,rate*.95,rate*.88,rate,rate*.97,rate*.93,rate],'g');spark('spEr',mkErrSpark(exs),'r');
+}
+function spark(id,vals,cls){const max=Math.max(...vals,1);set(id,vals.map(v=>`<div class="sb ${cls}" style="height:${Math.max(8,(v/max)*100)}%"></div>`).join(''));}
+function mkSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
+function mkErrSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>e.status==='error'&&new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
+
+function setTab(el,t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');S.tab=t;renderWorkflows();}
+function handleSearch(){S.searchQ=document.getElementById('srch').value.toLowerCase();renderWorkflows();if(S.currentPage==='executions')renderExecPage();}
+
+function renderWorkflows(){
+  const grouped=getGrouped();
+  let rows=Object.entries(grouped).map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const health=Math.round((succ/exs.length)*100);const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];return{name,exs,health,last,hasErr:exs.some(e=>e.status==='error')};});
+  if(S.searchQ) rows=rows.filter(r=>r.name.toLowerCase().includes(S.searchQ));
+  if(S.tab==='success') rows=rows.filter(r=>r.last.status==='success');
+  if(S.tab==='error') rows=rows.filter(r=>r.hasErr);
+  set('wfCnt',rows.length+' workflows');
+  if(!rows.length){set('wfBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length?'🔍':'📡'}</div>${S.executions.length?'No match':'Waiting for webhooks…'}</div></td></tr>`);return;}
+  set('wfBody',rows.map(r=>{const hColor=r.health>=80?'var(--gr)':r.health>=50?'var(--ye)':'var(--re)';const pc=r.last.status==='success'?'p-ok':r.last.status==='error'?'p-er':'p-mu';const pl=r.last.status==='success'?'Success':r.last.status==='error'?'Failed':'Unknown';const avg=Math.round(r.exs.reduce((a,e)=>a+(e.durationMs||0),0)/r.exs.length);const ti=r.exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);return`<tr><td><div class="wn"><div class="wn-m">${esc(r.name)}</div><div class="wn-s">${r.exs.length} execs</div></div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><div class="hb"><div class="hbr"><div class="hbf" style="width:${r.health}%;background:${hColor}"></div></div><div class="hpct" style="color:${hColor}">${r.health}%</div></div></td><td><span class="mono">${fmtDur(avg)}</span></td><td><span class="mono">${ti.toLocaleString()}</span></td><td><span class="mono">${timeAgo(new Date(r.last.receivedAt))}</span></td></tr>`;}).join(''));
+}
+function renderLog(){const exs=[...S.executions].slice(0,12);if(!exs.length){set('logList','<div class="empty"><div class="empty-i">📋</div>Waiting…</div>');return;}set('logList',exs.map((e,i)=>{const icon=e.status==='error'?'❌':'✅';const sub=e.status==='error'?(e.errorMessage||'Failed'):`${fmtDur(e.durationMs)} · ${e.itemsProcessed} items`;return`<div class="li"><div class="lic">${icon}</div><div class="lib"><div class="lit">${esc(e.workflowName)}</div><div class="lis">${esc(sub)}</div></div><div class="ltime">${timeAgo(new Date(e.receivedAt))}</div></div>`;}).join(''));}
+function renderHealth(){const g=getGrouped();const rows=Object.entries(g).map(([name,exs])=>{const s=exs.filter(e=>e.status==='success').length;const score=Math.round((s/exs.length)*100);return{name,score,color:score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)'};}).sort((a,b)=>a.score-b.score).slice(0,6);if(!rows.length){set('healthList','<div class="empty"><div class="empty-i">❤️</div>No data</div>');return;}set('healthList',rows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${h.color}">${h.score}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.score}%;background:${h.color}"></div></div></div>`).join(''));}
+function renderActivity(){const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return S.executions.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);set('actChart',days.map((d,i)=>`<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/max)*100)}%"></div></div><div class="acl">${d}</div></div>`).join(''));}
+function renderErrors(){const errs=S.executions.filter(e=>e.status==='error').slice(0,5);set('errCnt',errs.length?errs.length+' active':'');if(!errs.length){set('errList','<div class="empty"><div class="empty-i">✅</div>No errors</div>');return;}set('errList',errs.map(e=>`<div class="ei"><div class="edot"></div><div class="eb"><div class="en">${esc(e.workflowName)}</div><div class="em">${esc(e.errorMessage||'Unknown error')}</div></div><div class="et">${timeAgo(new Date(e.receivedAt))}</div></div>`).join(''));}
+
+function renderWFPage(){const g=getGrouped();const entries=Object.entries(g);set('wfPageCount',entries.length+' workflows');if(!entries.length){set('wfGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div>');return;}set('wfGrid',entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const health=Math.round((succ/exs.length)*100);const hColor=health>=80?'var(--gr)':health>=50?'var(--ye)':'var(--re)';const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];const ti=exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);const pc=last.status==='success'?'p-ok':last.status==='error'?'p-er':'p-mu';const pl=last.status==='success'?'Success':last.status==='error'?'Failed':'Unknown';return`<div class="wf-card"><div class="wf-card-top"><div><div class="wf-card-name">${esc(name)}</div><div class="wf-card-id">Last run ${timeAgo(new Date(last.receivedAt))}</div></div><span class="pill ${pc}"><span class="pd"></span>${pl}</span></div><div class="wf-card-stats"><div class="wf-stat"><div class="wf-stat-val">${exs.length}</div><div class="wf-stat-lbl">Executions</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--re)">${errs}</div><div class="wf-stat-lbl">Errors</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--ac)">${fmtDur(avg)}</div><div class="wf-stat-lbl">Avg Time</div></div></div><div class="wf-hbar"><div class="wf-hbar-fill" style="width:${health}%;background:${hColor}"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--mu2)"><span>Health: <b style="color:${hColor}">${health}%</b></span><span>${ti.toLocaleString()} items</span></div></div>`;}).join(''));}
+
+function setExecFilter(el,f){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.execFilter=f;renderExecPage();}
+function renderExecPage(){let exs=[...S.executions];if(S.execFilter==='success')exs=exs.filter(e=>e.status==='success');if(S.execFilter==='error')exs=exs.filter(e=>e.status==='error');if(S.searchQ)exs=exs.filter(e=>e.workflowName.toLowerCase().includes(S.searchQ));set('execTotal',exs.length+' records');if(!exs.length){set('execBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">📋</div>No executions</div></td></tr>`);return;}set('execBody',exs.map(e=>{const pc=e.status==='success'?'p-ok':e.status==='error'?'p-er':'p-mu';const pl=e.status==='success'?'Success':e.status==='error'?'Failed':'Unknown';return`<tr><td><div class="wn-m">${esc(e.workflowName)}</div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:140px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join(''));}
+
+function renderHealthPage(){const g=getGrouped();const entries=Object.entries(g);if(!entries.length){set('healthGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data</div>');return;}set('healthGrid',entries.map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;const score=Math.round((succ/exs.length)*100);const color=score>=80?'var(--gr)':score>=50?'var(--ye)':'var(--re)';const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);return`<div class="health-card"><div class="health-card-name">${esc(name)}</div><div class="health-big-score" style="color:${color}">${score}%</div><div class="health-sublbl">Health · ${exs.length} executions</div><div class="health-bars"><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Success Rate</span><span class="health-bar-val" style="color:var(--gr)">${score}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${score}%;background:var(--gr)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Error Rate</span><span class="health-bar-val" style="color:var(--re)">${Math.round((errs/exs.length)*100)}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${Math.round((errs/exs.length)*100)}%;background:var(--re)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Avg Duration</span><span class="health-bar-val">${fmtDur(avg)}</span></div></div></div></div>`;}).join(''));}
+
+function renderAlertsPage(){const errs=S.executions.filter(e=>e.status==='error');set('alertsCount',errs.length?errs.length+' active':'All clear');if(!errs.length){set('alertsList','<div class="empty"><div class="empty-i">✅</div>All workflows healthy!</div>');return;}set('alertsList',errs.map(e=>`<div class="alert-item"><div class="alert-ico er">❌</div><div class="alert-body"><div class="alert-title">${esc(e.workflowName)}</div><div class="alert-msg">${esc(e.failedNode?`Node: ${e.failedNode} — `:'')}${esc(e.errorMessage||'Execution failed')}</div><div class="alert-meta"><span>${timeAgo(new Date(e.receivedAt))}</span><span>·</span><span>${fmtDur(e.durationMs)}</span></div></div></div>`).join(''));}
+
+function renderAnalyticsPage(){const exs=S.executions;const total=exs.length;const succ=exs.filter(e=>e.status==='success').length;const rate=total>0?Math.round((succ/total)*1000)/10:0;const avg=total>0?Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/total):0;set('an-total',total.toLocaleString());set('an-rate',rate+'%');set('an-avg',fmtDur(avg));const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});const max=Math.max(...counts,1);set('bigChart',days.map((d,i)=>`<div class="bc"><div class="bcw"><div class="bcb" style="height:${Math.max(4,(counts[i]/max)*100)}%;background:linear-gradient(180deg,rgba(0,212,255,.6),rgba(0,212,255,.15))"></div></div><div class="bcl">${d}</div></div>`).join(''));const g=getGrouped();const byC=Object.entries(g).sort((a,b)=>b[1].length-a[1].length).slice(0,5);set('topActive',byC.length?byC.map(([n,e],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val">${e.length} runs</div></div>`).join(''):'<div class="empty">No data</div>');const byR=Object.entries(g).filter(([,e])=>e.length>=2).map(([n,e])=>{const s=e.filter(x=>x.status==='success').length;return[n,Math.round((s/e.length)*100)];}).sort((a,b)=>b[1]-a[1]).slice(0,5);set('topReliable',byR.length?byR.map(([n,r],i)=>`<div class="top-item"><div class="top-rank ${i===0?'gold':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val" style="color:var(--gr)">${r}%</div></div>`).join(''):'<div class="empty">Need 2+ runs</div>');}
+
+function renderSettingsPage(){set('set-name',S.profile?.name||'—');set('set-email',S.user?.email||'—');set('set-uid',(S.user?.id||'').slice(0,18)+'…');set('set-worker',S.profile?.worker_url||'Not set');const src=document.getElementById('cstat');if(src){document.getElementById('settingsConnStat').className=src.className;document.getElementById('settingsConnDot').className=document.getElementById('cdot').className;document.getElementById('settingsConnTxt').textContent=document.getElementById('ctxt').textContent;}}
+
+// ═══════════════════════════════════════════════════════
+// SETTINGS MODAL
+// ═══════════════════════════════════════════════════════
+function showModal(){document.getElementById('mWorker').value=S.profile?.worker_url||'';document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+function closeModalOut(e){if(e.target===document.getElementById('modal'))closeModal();}
+
+async function saveWorkerUrl(){
+  const w=document.getElementById('mWorker').value.trim().replace(/\/$/,'');
+  if(!w) return toast('Enter a Worker URL','er');
+  const btn=document.getElementById('mSaveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Saving…';
+
+  // Save to Supabase profiles table
+  const {error}=await sb.from('profiles').upsert({id:S.user.id,name:S.profile?.name||'',worker_url:w});
+  btn.disabled=false; btn.innerHTML='Save to Supabase →';
+
+  if(error) return toast('Error saving: '+error.message,'er');
+
+  S.profile={...S.profile,worker_url:w};
+  updateConnUI();
+  closeModal();
+  set('set-worker',w);
+  toast('Worker URL saved to Supabase ✓','ok');
+  clearInterval(S.timer);
+  fetchData(true);
+  startTimer();
 }
 
-// ── SMOOTH SCROLL ─────────────────────────────────────
-document.querySelectorAll('a[href^="#"]').forEach(a=>{
-  a.addEventListener('click',e=>{
-    e.preventDefault();
-    const t=document.querySelector(a.getAttribute('href'));
-    if(t) t.scrollIntoView({behavior:'smooth'});
+function updateConnUI(){
+  const w=S.profile?.worker_url||'';
+  document.getElementById('curl').textContent=w||'No worker configured';
+  document.getElementById('whUrlBox').textContent=w?w+'/webhook':'Configure Worker URL in Settings →';
+  document.getElementById('mWorker').value=w;
+  if(document.getElementById('set-worker')) set('set-worker',w||'Not set');
+}
+function copyWebhook(){const w=S.profile?.worker_url;if(!w) return toast('Configure Worker URL first','er');navigator.clipboard.writeText(w+'/webhook').then(()=>toast('Webhook URL copied!','ok'));}
+function setConn(type,text){['cstat','settingsConnStat'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`cstat ${type}`;});['cdot','settingsConnDot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`cdot ${type}`;});['ctxt','settingsConnTxt'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=text;});}
+async function clearData(){const w=S.profile?.worker_url;if(!w) return toast('No worker configured','er');if(!confirm('Delete all execution data?')) return;try{await fetch(w+'/executions',{method:'DELETE'});S.executions=[];renderAll();toast('Data cleared','ok');}catch{toast('Failed','er');}}
+
+// ═══════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════
+function show(id){document.getElementById(id).style.display='block';}
+function hide(id){document.getElementById(id).style.display='none';}
+function set(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
+function errShow(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.display='block';}}
+function errHide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+function togglePw(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'👁':'🙈';}
+function timeAgo(d){if(!d||isNaN(d))return'—';const s=Math.floor((Date.now()-d)/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
+function isToday(d){const t=new Date();return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(7px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
+
+// ═══════════════════════════════════════════════════════
+// STATUS PAGE
+// ═══════════════════════════════════════════════════════
+const pageTitles={dashboard:'Dashboard <span class="sub">/ Live Overview</span>',workflows:'Workflows <span class="sub">/ All</span>',executions:'Executions <span class="sub">/ History</span>',health:'Health Scores <span class="sub">/ Overview</span>',alerts:'Alerts <span class="sub">/ Active</span>',analytics:'Analytics <span class="sub">/ Insights</span>',statuspage:'Client Status Page <span class="sub">/ Share</span>',settings:'Settings <span class="sub">/ Account</span>'};
+
+function openShareModal(){
+  // Populate workflow checkboxes
+  const names=[...new Set(S.executions.map(e=>e.workflowName))];
+  const existing=S.statusPage?.public_workflows||[];
+  const list=document.getElementById('sp-wf-list');
+  if(!names.length){list.innerHTML='<div style="color:var(--mu2);font-size:12px;padding:8px">No workflows yet — run some executions first</div>';}
+  else{list.innerHTML=names.map(n=>`<label style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s;font-size:12.5px" onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''"><input type="checkbox" value="${esc(n)}" ${existing.includes(n)?'checked':''} style="accent-color:var(--ac);width:14px;height:14px"/>${esc(n)}</label>`).join('');}
+  document.getElementById('sp-title').value=S.statusPage?.page_title||'';
+  document.getElementById('sp-desc').value=S.statusPage?.page_description||'';
+  document.getElementById('shareModal').classList.add('open');
+}
+function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
+function closeShareOut(e){if(e.target.id==='shareModal')closeShareModal();}
+
+async function saveStatusPage(){
+  const title=document.getElementById('sp-title').value.trim()||'Workflow Status';
+  const desc=document.getElementById('sp-desc').value.trim()||'Real-time status of all monitored automations';
+  const checked=[...document.querySelectorAll('#sp-wf-list input:checked')].map(i=>i.value);
+  if(!checked.length) return toast('Select at least one workflow','er');
+  const btn=document.getElementById('spSaveBtn');
+  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Saving…';
+
+  // Generate a stable page_id based on user id
+  const pageId = S.user.id.replace(/-/g,'').slice(0,16);
+  const payload={
+    user_id: S.user.id,
+    page_id: pageId,
+    page_title: title,
+    page_description: desc,
+    worker_url: S.profile?.worker_url||'',
+    public_workflows: checked,
+    updated_at: new Date().toISOString(),
+  };
+  const {error}=await sb.from('status_pages').upsert(payload,{onConflict:'page_id'});
+  btn.disabled=false; btn.innerHTML='Save & Generate Link →';
+  if(error) return toast('Error: '+error.message,'er');
+  S.statusPage=payload;
+  closeShareModal();
+  toast('Status page saved! ✓','ok');
+  renderStatusPagePanel();
+}
+
+async function loadStatusPage(){
+  if(!S.user) return;
+  const pageId=S.user.id.replace(/-/g,'').slice(0,16);
+  const {data}=await sb.from('status_pages').select('*').eq('page_id',pageId).single();
+  if(data) S.statusPage=data;
+  renderStatusPagePanel();
+}
+
+function renderStatusPagePanel(){
+  if(!S.statusPage) return;
+  const pageId=S.statusPage.page_id;
+  const baseUrl=window.location.origin+window.location.pathname.replace('app.html','').replace('index.html','');
+  const url=`${baseUrl}status.html?id=${pageId}`;
+  document.getElementById('statusPagePreview').style.display='block';
+  document.getElementById('viewStatusBtn').style.display='flex';
+  document.getElementById('spLinkBox').textContent=url;
+  document.getElementById('spLinkLabel').textContent=S.statusPage.page_title||'';
+  const wfs=S.statusPage.public_workflows||[];
+  document.getElementById('spPublicList').innerHTML=wfs.map(w=>`<span style="background:var(--ac2);border:1px solid rgba(0,212,255,.2);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--ac)">${esc(w)}</span>`).join('');
+}
+
+function copyStatusLink(){
+  const url=document.getElementById('spLinkBox').textContent;
+  navigator.clipboard.writeText(url).then(()=>toast('Status page URL copied! 🔗','ok'));
+}
+function viewStatusPage(){
+  const url=document.getElementById('spLinkBox').textContent;
+  window.open(url,'_blank');
+}
+
+// ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// PWA & MOBILE
+// ═══════════════════════════════════════════════════════
+let deferredPrompt = null;
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
   });
+}
+
+// Capture install prompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show banner after 3 seconds if not already installed
+  setTimeout(() => {
+    if (!window.matchMedia('(display-mode: standalone)').matches) {
+      const b = document.getElementById('pwaBanner');
+      if (b) b.style.display = 'flex';
+    }
+  }, 3000);
 });
 
-// Check if coming back from successful Stripe payment
-const params = new URLSearchParams(window.location.search);
-if (params.get('upgraded') === 'true') {
-  setTimeout(()=>toast('🎉 Welcome to Pro! Your account has been upgraded.','ok'), 500);
+window.addEventListener('appinstalled', () => {
+  dismissPWA();
+  toast('FlowPulse installed! 🎉 Open it from your home screen.','ok');
+});
+
+async function installPWA() {
+  if (!deferredPrompt) {
+    toast('To install: tap Share → Add to Home Screen','in');
+    return;
+  }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  dismissPWA();
+  if (outcome === 'accepted') toast('Installing FlowPulse… 🚀','ok');
 }
+
+function dismissPWA() {
+  const b = document.getElementById('pwaBanner');
+  if (b) b.style.display = 'none';
+}
+
+// Mobile bottom nav sync
+function setMobNav(page) {
+  document.querySelectorAll('.mn-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('mn-' + page);
+  if (el) el.classList.add('active');
+}
+
+// Update mobile error badge
+function updateMobBadge(count) {
+  const b = document.getElementById('mnBadge');
+  if (!b) return;
+  if (count > 0) { b.style.display = 'block'; b.textContent = count; }
+  else b.style.display = 'none';
+}
+
+// START
+
+init();
 </script>
 </body>
 </html>
