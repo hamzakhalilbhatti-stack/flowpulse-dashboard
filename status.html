@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FlowPulse — Status Page</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#050607;--s1:#0b0d10;--s2:#111418;--s3:#171b21;
+  --b1:rgba(255,255,255,0.055);--b2:rgba(255,255,255,0.1);
+  --tx:#e4e7ec;--mu:#576070;--mu2:#8490a0;
+  --ac:#00d4ff;--gr:#0fba81;--ye:#f59e0b;--re:#f04444;--pu:#8b5cf6;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+
+/* HEADER */
+.header{border-bottom:1px solid var(--b1);padding:0 5vw;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(5,6,7,.9);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:9px}
+.logo-icon{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(0,212,255,.2)}
+.logo-name{font-size:16px;font-weight:800;letter-spacing:-.3px}.logo-name span{color:var(--ac)}
+.header-right{display:flex;align-items:center;gap:10px}
+.last-updated{font-size:11px;color:var(--mu2);font-family:'JetBrains Mono',monospace}
+.refresh-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Syne',sans-serif}
+.refresh-btn:hover{background:var(--s3)}
+
+/* HERO */
+.hero{padding:52px 5vw 36px;text-align:center;position:relative;overflow:hidden}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(140px);pointer-events:none;opacity:.07}
+.hero-orb.a{width:500px;height:500px;background:var(--ac);top:-200px;left:-100px}
+.hero-orb.b{width:400px;height:400px;background:var(--pu);bottom:-100px;right:-100px}
+.client-label{font-size:11px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.page-title{font-size:clamp(24px,4vw,40px);font-weight:800;letter-spacing:-1px;margin-bottom:8px}
+.page-sub{font-size:14px;color:var(--mu2);margin-bottom:28px}
+
+/* OVERALL STATUS BANNER */
+.status-banner{display:inline-flex;align-items:center;gap:10px;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:700;border:1px solid;margin-bottom:0}
+.status-banner.operational{background:rgba(15,186,129,.08);border-color:rgba(15,186,129,.25);color:var(--gr)}
+.status-banner.degraded{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.25);color:var(--ye)}
+.status-banner.outage{background:rgba(240,68,68,.08);border-color:rgba(240,68,68,.25);color:var(--re)}
+.status-dot{width:8px;height:8px;border-radius:50%;animation:pulse-dot 2s infinite}
+.status-banner.operational .status-dot{background:var(--gr);box-shadow:0 0 8px var(--gr)}
+.status-banner.degraded .status-dot{background:var(--ye);box-shadow:0 0 8px var(--ye)}
+.status-banner.outage .status-dot{background:var(--re);box-shadow:0 0 8px var(--re)}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.2)}}
+
+/* STATS ROW */
+.stats-row{display:flex;justify-content:center;gap:40px;padding:32px 5vw;flex-wrap:wrap}
+.stat-item{text-align:center}
+.stat-val{font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
+.stat-lbl{font-size:11px;color:var(--mu2);margin-top:5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+.stat-divider{width:1px;background:var(--b1);align-self:stretch}
+
+/* CONTENT */
+.content{max-width:860px;margin:0 auto;padding:0 5vw 60px}
+
+/* SECTION */
+.section-title{font-size:11px;font-weight:700;color:var(--mu2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--b1)}
+
+/* WORKFLOW CARDS */
+.workflow-list{display:flex;flex-direction:column;gap:10px;margin-bottom:36px}
+.wf-item{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:14px;transition:border-color .2s}
+.wf-item:hover{border-color:var(--b2)}
+.wf-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.wf-status-dot.ok{background:var(--gr);box-shadow:0 0 7px var(--gr)}
+.wf-status-dot.warn{background:var(--ye);box-shadow:0 0 7px var(--ye)}
+.wf-status-dot.er{background:var(--re);box-shadow:0 0 7px var(--re)}
+.wf-info{flex:1;min-width:0}
+.wf-name{font-size:13.5px;font-weight:700;margin-bottom:3px}
+.wf-meta{font-size:11px;color:var(--mu2);font-family:'JetBrains Mono',monospace}
+.wf-right{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.wf-health{text-align:right}
+.wf-health-val{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.wf-health-lbl{font-size:9px;color:var(--mu2);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.wf-bar-wrap{width:80px}
+.wf-bar-track{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.wf-bar-fill{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.wf-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:10px;font-weight:700}
+.pill-ok{background:rgba(15,186,129,.1);color:var(--gr)}
+.pill-warn{background:rgba(245,158,11,.1);color:var(--ye)}
+.pill-er{background:rgba(240,68,68,.08);color:var(--re)}
+
+/* UPTIME CHART */
+.uptime-bars{display:flex;gap:3px;align-items:flex-end;height:36px;margin:10px 0 6px}
+.uptime-bar{flex:1;border-radius:3px;min-height:4px;transition:height .3s;cursor:pointer;position:relative}
+.uptime-bar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--s2);border:1px solid var(--b2);border-radius:6px;padding:4px 8px;font-size:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap;color:var(--tx);z-index:10}
+.uptime-labels{display:flex;justify-content:space-between;font-size:9px;color:var(--mu);font-family:'JetBrains Mono',monospace}
+
+/* INCIDENT LOG */
+.incident-list{display:flex;flex-direction:column;gap:8px;margin-bottom:36px}
+.incident-item{background:var(--s1);border:1px solid var(--b1);border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.incident-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:rgba(240,68,68,.08)}
+.incident-body{flex:1}
+.incident-name{font-size:12.5px;font-weight:700;margin-bottom:3px}
+.incident-msg{font-size:11.5px;color:var(--mu2);line-height:1.5}
+.incident-time{font-size:10px;color:var(--mu);font-family:'JetBrains Mono',monospace;margin-top:4px}
+.incident-empty{text-align:center;padding:24px;color:var(--mu2);font-size:13px}
+
+/* FOOTER */
+.status-footer{text-align:center;padding:28px 5vw;border-top:1px solid var(--b1);font-size:11.5px;color:var(--mu2)}
+.status-footer a{color:var(--ac);text-decoration:none;font-weight:600}
+
+/* LOADING */
+.loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px}
+.loading-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--ac),var(--pu));display:flex;align-items:center;justify-content:center;font-size:22px;animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.loading-txt{font-size:13px;color:var(--mu2)}
+
+/* ERROR */
+.error-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;text-align:center;padding:24px}
+.error-icon{font-size:44px}
+.error-title{font-size:20px;font-weight:800}
+.error-sub{font-size:13px;color:var(--mu2);max-width:400px;line-height:1.6}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.fade-up{animation:fadeUp .5s ease both}
+
+@media(max-width:600px){.wf-right{flex-direction:column;align-items:flex-end;gap:6px}.stats-row{gap:24px}.stat-divider{display:none}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div class="logo-name">Flow<span>Pulse</span></div>
+  </div>
+  <div class="header-right">
+    <div class="last-updated" id="lastUpdated">Fetching…</div>
+    <button class="refresh-btn" onclick="loadStatus()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainContent">
+  <div class="loading-wrap">
+    <div class="loading-icon">⚡</div>
+    <div class="loading-txt">Loading status page…</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="status-footer">
+  Powered by <a href="index.html">FlowPulse</a> · Real-time n8n Automation Monitoring
+</div>
+
+<script>
+const SUPABASE_URL  = 'https://haszbfvjlxkwrrqfgqum.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3piZnZqbHhrd3JycWZncXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTgxMzEsImV4cCI6MjA4ODU3NDEzMX0.-60WLt-U37aext9eKlOhnYbH0fuHmexIdLMzMvyZMjs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// Get page ID from URL: status.html?id=abc123
+const params   = new URLSearchParams(window.location.search);
+const PAGE_ID  = params.get('id');
+
+async function loadStatus() {
+  if (!PAGE_ID) { showError('No status page ID', 'Add ?id=YOUR_PAGE_ID to the URL. Share this page from your FlowPulse dashboard.'); return; }
+
+  // Load status page config from Supabase
+  const { data: pageData, error } = await sb
+    .from('status_pages')
+    .select('*')
+    .eq('page_id', PAGE_ID)
+    .single();
+
+  if (error || !pageData) { showError('Status page not found', 'This status page doesn\'t exist or has been removed. Check the URL and try again.'); return; }
+
+  // Fetch executions from Cloudflare Worker
+  let executions = [];
+  try {
+    const res  = await fetch(pageData.worker_url + '/executions');
+    const data = await res.json();
+    executions = data.executions || [];
+  } catch(e) {
+    showError('Cannot reach automation server', 'The worker URL is not responding. The page owner may be experiencing issues.'); return;
+  }
+
+  // Filter to only public workflows
+  const publicWorkflows = pageData.public_workflows || [];
+  const filtered = executions.filter(e => publicWorkflows.includes(e.workflowName));
+
+  document.getElementById('lastUpdated', `Updated ${new Date().toLocaleTimeString()}`);
+  document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  renderPage(pageData, filtered, publicWorkflows);
+}
+
+function renderPage(config, executions, publicWorkflows) {
+  // Group by workflow
+  const grouped = {};
+  executions.forEach(e => {
+    if (!grouped[e.workflowName]) grouped[e.workflowName] = [];
+    grouped[e.workflowName].push(e);
+  });
+
+  // Add empty entries for workflows with no executions yet
+  publicWorkflows.forEach(name => { if (!grouped[name]) grouped[name] = []; });
+
+  // Calculate overall stats
+  const total  = executions.length;
+  const succ   = executions.filter(e => e.status === 'success').length;
+  const errs   = executions.filter(e => e.status === 'error').length;
+  const rate   = total > 0 ? Math.round((succ / total) * 1000) / 10 : 100;
+  const wfCount = Object.keys(grouped).length;
+  const hasErrors = errs > 0;
+  const overallStatus = rate >= 95 ? 'operational' : rate >= 70 ? 'degraded' : 'outage';
+  const statusText = overallStatus === 'operational' ? 'All Systems Operational' : overallStatus === 'degraded' ? 'Partial Degradation' : 'Service Disruption';
+
+  // Workflow rows
+  const wfRows = Object.entries(grouped).map(([name, exs]) => {
+    const s     = exs.filter(e => e.status === 'success').length;
+    const total = exs.length;
+    const health = total > 0 ? Math.round((s / total) * 100) : 100;
+    const hColor = health >= 80 ? 'var(--gr)' : health >= 50 ? 'var(--ye)' : 'var(--re)';
+    const dotClass = health >= 80 ? 'ok' : health >= 50 ? 'warn' : 'er';
+    const pillClass = health >= 80 ? 'pill-ok' : health >= 50 ? 'pill-warn' : 'pill-er';
+    const pillTxt = health >= 80 ? 'Operational' : health >= 50 ? 'Degraded' : 'Outage';
+    const lastRun = exs.length ? timeAgo(new Date(exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0].receivedAt)) : 'No data';
+    const avgDur = total > 0 ? fmtDur(Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/total)) : '—';
+
+    // 30-day uptime bars
+    const bars = Array.from({length:30},(_,i)=>{
+      const d=new Date(); d.setDate(d.getDate()-(29-i));
+      const dayExs=exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString());
+      if(!dayExs.length) return {pct:100,color:'rgba(255,255,255,0.05)',tip:'No data'};
+      const daySucc=dayExs.filter(e=>e.status==='success').length;
+      const pct=Math.round((daySucc/dayExs.length)*100);
+      const color=pct>=95?'rgba(15,186,129,0.5)':pct>=70?'rgba(245,158,11,0.5)':'rgba(240,68,68,0.5)';
+      return{pct,color,tip:`${d.toDateString()}: ${pct}%`};
+    });
+    const uptimePct = bars.filter(b=>b.tip!=='No data').length > 0
+      ? Math.round(bars.filter(b=>b.tip!=='No data').reduce((a,b)=>a+b.pct,0)/bars.filter(b=>b.tip!=='No data').length)
+      : 100;
+
+    return `
+      <div class="wf-item fade-up">
+        <div class="wf-status-dot ${dotClass}"></div>
+        <div class="wf-info">
+          <div class="wf-name">${esc(name)}</div>
+          <div class="wf-meta">Last run: ${lastRun} · Avg: ${avgDur} · ${total} total runs</div>
+          <div class="uptime-bars">
+            ${bars.map(b=>`<div class="uptime-bar" style="height:${Math.max(15,(b.pct/100)*36)}px;background:${b.color}" data-tip="${b.tip}"></div>`).join('')}
+          </div>
+          <div class="uptime-labels"><span>30 days ago</span><span>${uptimePct}% uptime</span><span>Today</span></div>
+        </div>
+        <div class="wf-right">
+          <div class="wf-health">
+            <div class="wf-health-val" style="color:${hColor}">${health}%</div>
+            <div class="wf-health-lbl">Health</div>
+          </div>
+          <span class="wf-pill ${pillClass}">${pillTxt}</span>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Recent incidents
+  const incidents = executions.filter(e=>e.status==='error').slice(0,5);
+  const incidentHTML = incidents.length
+    ? incidents.map(e=>`
+      <div class="incident-item fade-up">
+        <div class="incident-icon">❌</div>
+        <div class="incident-body">
+          <div class="incident-name">${esc(e.workflowName)}</div>
+          <div class="incident-msg">${esc(e.failedNode?`Node "${e.failedNode}" failed — `:'')}${esc(e.errorMessage||'Execution failed')}</div>
+          <div class="incident-time">${timeAgo(new Date(e.receivedAt))} · Duration: ${fmtDur(e.durationMs)}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="incident-empty">✅ No incidents in the last 30 days</div>';
+
+  document.getElementById('mainContent').innerHTML = `
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-orb a"></div><div class="hero-orb b"></div>
+      <div class="client-label">Automation Status</div>
+      <div class="page-title fade-up">${esc(config.page_title || 'Workflow Status')}</div>
+      <div class="page-sub fade-up">${esc(config.page_description || 'Real-time status of all monitored automations')}</div>
+      <div class="status-banner ${overallStatus} fade-up">
+        <div class="status-dot"></div>
+        ${statusText}
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row fade-up">
+      <div class="stat-item"><div class="stat-val" style="color:var(--ac)">${wfCount}</div><div class="stat-lbl">Workflows</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-val" style="color:var(--gr)">${rate}%</div><div class="stat-lbl">Success Rate</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-val">${total.toLocaleString()}</div><div class="stat-lbl">Total Runs</div></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><div class="stat-val" style="color:${errs>0?'var(--re)':'var(--gr)'}">${errs}</div><div class="stat-lbl">Incidents</div></div>
+    </div>
+
+    <!-- WORKFLOWS -->
+    <div class="content">
+      <div class="section-title">Monitored Workflows</div>
+      <div class="workflow-list">${wfRows || '<div class="incident-empty">No workflows selected for this status page</div>'}</div>
+      <div class="section-title">Recent Incidents</div>
+      <div class="incident-list">${incidentHTML}</div>
+    </div>
+  `;
+}
+
+function showError(title, sub) {
+  document.getElementById('mainContent').innerHTML = `
+    <div class="error-wrap">
+      <div class="error-icon">⚡</div>
+      <div class="error-title">${title}</div>
+      <div class="error-sub">${sub}</div>
+    </div>`;
+}
+
+function timeAgo(d){if(!d||isNaN(d))return'—';const s=Math.floor((Date.now()-d)/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+loadStatus();
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>
