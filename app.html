@@ -381,7 +381,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 </div>
 
 <!-- APP -->
-<div id="appPage">
+<div id="appPage" style="display:none">
   <div class="progress" id="progress"></div>
   <aside class="sidebar">
     <div class="s-logo">
@@ -649,9 +649,38 @@ const S = {
 };
 
 async function init(){
+  // Always start fully hidden — nothing shows until auth confirms
+  hide('appPage');hide('loginPage');hide('signupPage');
+  show('loadingPage');
+
   const{data:{session}}=await sb.auth.getSession();
-  if(session?.user){S.user=session.user;await loadProfile();hide('loadingPage');showApp();}
-  else{hide('loadingPage');showLogin();}
+  if(session?.user){
+    S.user=session.user;
+    await loadProfile();
+    // Block clients from accessing agency dashboard
+    if(S.profile?.role==='client'){
+      hide('loadingPage');
+      document.body.innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;color:#f1f3f6;background:#060708;gap:16px;text-align:center;padding:24px">
+        <div style="font-size:48px">🔒</div>
+        <div style="font-size:20px;font-weight:700">Wrong Portal</div>
+        <div style="font-size:14px;color:#9aa3b0;max-width:340px">This is the agency dashboard. Your client account should use <b style="color:#38bdf8">client.html</b> instead.</div>
+        <a href="client.html" style="padding:12px 24px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:700;text-decoration:none;font-size:13px">Go to Client Portal →</a>
+        <div style="font-size:11px;color:#5a6270;cursor:pointer" onclick="(async()=>{await supabase.createClient('${SUPABASE_URL}','${SUPABASE_ANON}').auth.signOut();location.reload();})()">Sign out</div>
+      </div>`;
+      return;
+    }
+    hide('loadingPage');
+    showApp();
+  }else{
+    hide('loadingPage');
+    showLogin();
+  }
+
+  // Listen for auth changes (tab focus, token refresh, etc.)
+  sb.auth.onAuthStateChange((event,session)=>{
+    if(event==='SIGNED_OUT'){hide('appPage');showLogin();}
+    if(event==='SIGNED_IN'&&!S.user){location.reload();}
+  });
 }
 async function loadProfile(){const{data}=await sb.from('profiles').select('*').eq('id',S.user.id).single();S.profile=data||{};}
 
@@ -668,7 +697,15 @@ async function doLogin(){
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
   btn.disabled=false;btn.innerHTML='Sign In →';
   if(error)return errShow('li-err',error.message==='Invalid login credentials'?'Wrong email or password.':error.message);
-  S.user=data.user;await loadProfile();showApp();
+  S.user=data.user;
+  await loadProfile();
+  // Block clients from logging into agency dashboard
+  if(S.profile?.role==='client'){
+    await sb.auth.signOut();
+    S.user=null;S.profile=null;
+    return errShow('li-err','This is the agency dashboard. Use client.html to log in.');
+  }
+  showApp();
 }
 
 async function doSignup(){
@@ -684,7 +721,7 @@ async function doSignup(){
   btn.disabled=false;btn.innerHTML='Create Account →';
   if(error)return errShow('su-err',error.message);
   S.user=data.user;
-  await sb.from('profiles').upsert({id:S.user.id,name,worker_url:''});
+  await sb.from('profiles').upsert({id:S.user.id,name,worker_url:'',role:'agency',client_slug:null});
   await loadProfile();showApp();
 }
 
@@ -695,7 +732,9 @@ async function logout(){
 }
 
 function showApp(){
-  hide('loginPage');hide('signupPage');show('appPage');
+  if(!S.user){showLogin();return;} // safety guard
+  hide('loginPage');hide('signupPage');
+  show('appPage');
   const name=S.profile?.name||S.user?.email?.split('@')[0]||'HKB';
   document.getElementById('sAva').textContent=name.slice(0,2).toUpperCase();
   document.getElementById('sName').textContent=name;
