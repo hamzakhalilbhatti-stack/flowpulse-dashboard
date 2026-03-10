@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Client Portal — HKB Automations</title>
+<meta name="theme-color" content="#060708"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="My Automations"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#060708;--s1:#0c0e11;--s2:#12151a;--s3:#181c22;
+  --b0:rgba(255,255,255,0.03);--b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);
+  --tx:#f1f3f6;--tx2:#9aa3b0;--tx3:#5a6270;
+  --vi:#7c3aed;--vi2:rgba(124,58,237,0.12);--vi3:rgba(124,58,237,0.06);
+  --mi:#10b981;--mi2:rgba(16,185,129,0.1);--mi3:rgba(16,185,129,0.05);
+  --am:#f59e0b;--am2:rgba(245,158,11,0.1);
+  --re:#ef4444;--re2:rgba(239,68,68,0.08);
+  --ic:#38bdf8;
+  --rad2:14px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Bricolage Grotesque',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* AUTH */
+.auth-scene{position:fixed;inset:0;overflow:hidden;z-index:0}
+.auth-mesh{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(124,58,237,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(16,185,129,0.06) 0%,transparent 60%)}
+.auth-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px}
+.auth-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.auth-logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 0 30px rgba(124,58,237,.25)}
+.auth-logo-name{font-size:16px;font-weight:800}
+.auth-logo-tag{font-size:10px;color:var(--tx3);letter-spacing:.5px;margin-top:2px}
+.auth-card{background:rgba(12,14,17,0.92);border:1px solid var(--b2);border-radius:18px;padding:32px;width:420px;max-width:95vw;backdrop-filter:blur(28px);box-shadow:0 32px 80px rgba(0,0,0,.5);animation:cardIn .4s cubic-bezier(.4,0,.2,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.auth-title{font-size:19px;font-weight:700;letter-spacing:-.3px;margin-bottom:4px}
+.auth-sub{font-size:12px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.fl{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.fi-wrap{position:relative}
+.fi{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:11px 13px;color:var(--tx);font-size:13px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+.fi:focus{border-color:var(--vi);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.fi::placeholder{color:var(--tx3)}
+.fi-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--tx3);cursor:pointer;font-size:14px}
+.auth-btn{width:100%;padding:12px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--vi),#5b21b6);color:#fff;font-size:13px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;box-shadow:0 4px 20px rgba(124,58,237,.3);transition:opacity .2s,transform .15s}
+.auth-btn:hover{opacity:.88;transform:translateY(-1px)}
+.auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-err{background:var(--re2);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--re);margin-top:10px;display:none}
+.powered{text-align:center;margin-top:20px;font-size:11px;color:var(--tx3)}
+.powered b{color:var(--tx2)}
+
+/* LOADING */
+#loadingPage{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:600;gap:14px}
+.load-mark{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:24px;animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(124,58,237,.3)}50%{transform:scale(1.08);box-shadow:0 0 40px rgba(124,58,237,.5)}}
+.load-txt{font-size:12px;color:var(--tx3)}
+
+/* APP */
+#appPage{display:none;position:relative;z-index:1}
+.progress{height:2px;background:linear-gradient(90deg,var(--vi),var(--ic),var(--mi));position:fixed;top:0;left:0;right:0;z-index:300;transform:scaleX(0);transform-origin:left;transition:none}
+.progress.run{transform:scaleX(1);transition:transform 9s linear}
+.progress.end{opacity:0;transition:opacity .4s}
+
+/* TOPBAR */
+.topbar{height:54px;display:flex;align-items:center;padding:0 24px;border-bottom:1px solid var(--b1);background:rgba(6,7,8,.9);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50;gap:12px}
+.tb-logo{display:flex;align-items:center;gap:9px}
+.tb-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:13px}
+.tb-logo-name{font-size:14px;font-weight:800;letter-spacing:-.3px}
+.tb-client-name{font-size:13px;font-weight:600;color:var(--ic);margin-left:4px}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:9px}
+.tb-badge{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:var(--mi);background:var(--mi3);border:1px solid rgba(16,185,129,.15);padding:4px 8px;border-radius:99px}
+.tb-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--mi);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tb-user{display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);cursor:pointer;font-size:11.5px;font-weight:600;transition:background .15s}
+.tb-user:hover{background:var(--s3)}
+.tb-ava{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700}
+
+/* CONTENT */
+.content{max-width:1100px;margin:0 auto;padding:24px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:17px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .15s;animation:up .4s ease both}
+.stat:nth-child(1){animation-delay:.04s}.stat:nth-child(2){animation-delay:.08s}.stat:nth-child(3){animation-delay:.12s}.stat:nth-child(4){animation-delay:.16s}
+.stat:hover{border-color:var(--b2);transform:translateY(-2px)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.stat-lbl{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.stat-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ic-vi{background:var(--vi2)}.ic-mi{background:var(--mi2)}.ic-re{background:var(--re2)}.ic-am{background:var(--am2)}
+.stat-val{font-size:28px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-family:'IBM Plex Mono',monospace;margin-bottom:5px}
+.stat-note{font-size:10.5px;color:var(--tx3)}
+.cup{color:var(--mi)}.cdn{color:var(--re)}.cnm{color:var(--tx3)}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 280px;gap:14px}
+.rcol{display:flex;flex-direction:column;gap:14px}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);overflow:hidden;margin-bottom:14px}
+.card:last-child{margin-bottom:0}
+.card::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent)}
+.ch{padding:13px 17px;border-bottom:1px solid var(--b0);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:12px;font-weight:700}
+.cm{font-size:10.5px;color:var(--tx3)}
+
+/* TABS & FILTERS */
+.tabs{display:flex;padding:0 17px;background:var(--b0);border-bottom:1px solid var(--b0)}
+.tab{padding:8px 11px;font-size:11px;font-weight:600;cursor:pointer;color:var(--tx3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab.active{color:var(--vi);border-bottom-color:var(--vi)}
+.tab:hover:not(.active){color:var(--tx)}
+.exec-filters{display:flex;gap:6px;padding:12px 17px 0;flex-wrap:wrap}
+.filter-btn{padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s1);color:var(--tx2);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
+.filter-btn.active{background:var(--vi2);border-color:rgba(124,58,237,.3);color:var(--tx)}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;padding:9px 17px;border-bottom:1px solid var(--b1);background:var(--b0)}
+.tbl td{padding:10px 17px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--b0)}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:99px;font-size:9.5px;font-weight:700}
+.pd{width:4px;height:4px;border-radius:50%}
+.p-ok{background:var(--mi2);color:var(--mi)}.p-ok .pd{background:var(--mi)}
+.p-er{background:var(--re2);color:var(--re)}.p-er .pd{background:var(--re)}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx3)}
+
+/* HEALTH */
+.hl{padding:12px 15px;display:flex;flex-direction:column;gap:9px}
+.hr{display:flex;flex-direction:column;gap:3px}
+.hr-top{display:flex;justify-content:space-between;font-size:11.5px}
+.hr-n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:155px}
+.hr-v{font-family:'IBM Plex Mono',monospace;font-size:10px;flex-shrink:0}
+.hr-t{height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
+.hr-f{height:100%;border-radius:2px;transition:width 1s}
+
+/* LOG */
+.log-list{max-height:260px;overflow-y:auto}
+.log-list::-webkit-scrollbar{width:3px}.log-list::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.li{display:flex;align-items:flex-start;gap:8px;padding:9px 15px;border-bottom:1px solid rgba(255,255,255,.02)}
+.li:last-child{border-bottom:none}
+.li-ic{font-size:10px;flex-shrink:0;margin-top:1px}
+.li-b{flex:1;min-width:0}
+.li-t{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-s{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.li-time{font-size:9px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+
+/* ALERTS */
+.talert{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);border-radius:9px;padding:9px 13px;display:none;align-items:center;gap:8px;font-size:12px;margin-bottom:14px}
+.talert b{color:var(--re)}.talert-x{cursor:pointer;color:var(--tx3);font-size:18px;line-height:1;margin-left:auto}
+
+/* ACTIVITY CHART */
+.act{display:flex;align-items:flex-end;gap:4px;height:64px;padding:10px 15px}
+.ac{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.acw{flex:1;display:flex;align-items:flex-end;width:100%}
+.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(124,58,237,.55),rgba(124,58,237,.12));min-height:3px}
+.acl{font-size:8.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
+
+/* WF CARDS */
+.wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:14px}
+.wf-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:18px;transition:border-color .2s,transform .15s}
+.wf-card:hover{border-color:var(--b2);transform:translateY(-2px)}
+.wf-card-name{font-size:13px;font-weight:700;margin-bottom:3px}
+.wf-card-last{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-bottom:12px}
+.wf-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.wcs{display:flex;flex-direction:column;gap:2px}
+.wcs-val{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.wcs-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px}
+.wf-hbar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:12px}
+.wf-hbar-fill{height:100%;border-radius:2px;transition:width .8s}
+
+/* SECTION TITLE */
+.sec-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.sec-title-txt{font-size:13px;font-weight:700;letter-spacing:-.2px}
+.sec-title-cm{font-size:11px;color:var(--tx3)}
+
+/* EMPTY */
+.empty{padding:24px;text-align:center;color:var(--tx3);font-size:12px}
+.empty-i{font-size:22px;margin-bottom:6px}
+
+/* TOASTS */
+.tw{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:5px;z-index:9998}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 12px;font-size:11.5px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:200px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.toast.ok{border-color:rgba(16,185,129,.25)}.toast.er{border-color:rgba(239,68,68,.25)}.toast.in{border-color:rgba(124,58,237,.25)}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.15);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+@media(max-width:900px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.stats{grid-template-columns:1fr 1fr;gap:8px}.content{padding:14px}.wf-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div id="loadingPage"><div class="load-mark">⚡</div><div class="load-txt">Loading your dashboard…</div></div>
+
+<!-- LOGIN -->
+<div id="loginPage" style="display:none">
+  <div class="auth-scene"><div class="auth-mesh"></div><div class="auth-lines"></div></div>
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">⚡</div>
+      <div><div class="auth-logo-name">HKB Automations</div><div class="auth-logo-tag">Client Portal — Your Workflow Dashboard</div></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-title">Client Sign In</div>
+      <div class="auth-sub">Access your automation dashboard. Your login was provided by HKB Automations.</div>
+      <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="li-email" placeholder="your@email.com"/></div>
+      <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="li-pass" onkeydown="if(event.key==='Enter')doLogin()"/><span class="fi-eye" onclick="togglePw('li-pass',this)">👁</span></div></div>
+      <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-err" id="li-err"></div>
+      <div class="powered">Powered by <b>THE HKB AUTOMATIONS</b></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appPage">
+  <div class="progress" id="progress"></div>
+
+  <div class="topbar">
+    <div class="tb-logo">
+      <div class="tb-logo-mark">⚡</div>
+      <div class="tb-logo-name">HKB Automations</div>
+      <div class="tb-client-name" id="tbClientName">— Client Portal</div>
+    </div>
+    <div class="tb-r">
+      <div class="tb-badge"><div class="tb-badge-dot"></div>Live</div>
+      <button style="padding:6px 11px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);font-family:'Bricolage Grotesque',sans-serif;display:flex;align-items:center;gap:5px" onclick="fetchData(true)">↻ Refresh</button>
+      <div class="tb-user" id="tbUser" onclick="logout()">
+        <div class="tb-ava" id="tbAva">?</div>
+        <span id="tbName">—</span>
+        <span style="color:var(--tx3);font-size:10px">Sign out</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="talert" class="talert"><span>⚠️</span><div id="talertTxt" style="flex:1"></div><span class="talert-x" onclick="this.parentElement.style.display='none'">×</span></div>
+
+    <!-- STATS -->
+    <div class="stats">
+      <div class="stat"><div class="stat-top"><div class="stat-lbl">My Workflows</div><div class="stat-ic ic-vi">⟳</div></div><div class="stat-val" id="s-wf">—</div><div class="stat-note cnm" id="s-wfN">Waiting…</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-lbl">Total Runs</div><div class="stat-ic ic-mi">▶</div></div><div class="stat-val" id="s-ex">—</div><div class="stat-note cnm" id="s-exN">All time</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-lbl">Success Rate</div><div class="stat-ic ic-mi">✓</div></div><div class="stat-val" id="s-sr">—</div><div class="stat-note cnm" id="s-srN">Overall</div></div>
+      <div class="stat"><div class="stat-top"><div class="stat-lbl">Active Errors</div><div class="stat-ic ic-re">⚠</div></div><div class="stat-val" id="s-er" style="color:var(--re)">—</div><div class="stat-note cnm" id="s-erN">Needs attention</div></div>
+    </div>
+
+    <!-- WORKFLOW CARDS -->
+    <div class="sec-title">
+      <div class="sec-title-txt">My Workflows</div>
+      <div class="sec-title-cm" id="wfCount"></div>
+    </div>
+    <div class="wf-grid" id="wfGrid"><div class="empty"><div class="empty-i">📡</div>Waiting for data…</div></div>
+
+    <!-- MAIN CONTENT -->
+    <div class="g2">
+      <!-- EXECUTIONS -->
+      <div class="card" style="margin-bottom:0">
+        <div class="ch"><div class="ct">Execution History</div><div class="cm" id="execCount"></div></div>
+        <div class="exec-filters"><button class="filter-btn active" onclick="setFilter(this,'all')">All</button><button class="filter-btn" onclick="setFilter(this,'success')">✅ Success</button><button class="filter-btn" onclick="setFilter(this,'error')">❌ Failed</button></div>
+        <div style="overflow-x:auto;margin-top:6px"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Items</th><th>Error</th><th>Time</th></tr></thead><tbody id="execBody"></tbody></table></div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="rcol">
+        <div class="card">
+          <div class="ch"><div class="ct">Recent Activity</div><div class="tb-badge" style="font-size:8.5px"><div class="tb-badge-dot"></div>Live</div></div>
+          <div class="log-list" id="logList"><div class="empty"><div class="empty-i">📋</div>Waiting…</div></div>
+        </div>
+        <div class="card">
+          <div class="ch"><div class="ct">Activity This Week</div><div class="cm">daily runs</div></div>
+          <div class="act" id="actChart"><div class="empty" style="width:100%">No data</div></div>
+        </div>
+        <div class="card" style="margin-bottom:0">
+          <div class="ch"><div class="ct">Workflow Health</div><div class="cm">success rate</div></div>
+          <div class="hl" id="healthList"><div class="empty"><div class="empty-i">❤️</div>No data</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tw" id="tw"></div>
+
+<script>
+const SUPABASE_URL  = 'https://haszbfvjlxkwrrqfgqum.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3piZnZqbHhrd3JycWZncXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTgxMzEsImV4cCI6MjA4ODU3NDEzMX0.-60WLt-U37aext9eKlOhnYbH0fuHmexIdLMzMvyZMjs';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+const S = {
+  user:null, profile:null,
+  executions:[], filter:'all',
+  timer:null,
+};
+
+async function init(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session?.user){
+    S.user=session.user;
+    await loadProfile();
+    // Block agency accounts from client portal
+    if(!S.profile?.client_slug){
+      hide('loadingPage');
+      document.body.innerHTML=`<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;color:#f1f3f6;background:#060708;gap:16px;text-align:center;padding:24px">
+        <div style="font-size:48px">🔒</div>
+        <div style="font-size:20px;font-weight:700">Agency Account Detected</div>
+        <div style="font-size:14px;color:#9aa3b0;max-width:340px">This is the client portal. Agency accounts use <b style="color:#38bdf8">app.html</b> instead.</div>
+        <a href="app.html" style="padding:12px 24px;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:700;text-decoration:none;font-size:13px">Open Agency Dashboard →</a>
+        <div style="font-size:11px;color:#5a6270;cursor:pointer" onclick="(async()=>{await sb.auth.signOut();location.reload();})()">Or sign out</div>
+      </div>`;
+      return;
+    }
+    hide('loadingPage');
+    showApp();
+  }else{
+    hide('loadingPage');
+    show('loginPage');
+  }
+}
+
+async function loadProfile(){
+  const{data}=await sb.from('profiles').select('*').eq('id',S.user.id).single();
+  S.profile=data||{};
+}
+
+async function doLogin(){
+  const email=document.getElementById('li-email').value.trim();
+  const pass=document.getElementById('li-pass').value;
+  const err=document.getElementById('li-err');
+  err.style.display='none';
+  if(!email||!email.includes('@')){err.textContent='Enter a valid email.';err.style.display='block';return;}
+  if(!pass){err.textContent='Enter your password.';err.style.display='block';return;}
+  const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.innerHTML='Sign In →';
+  if(error){err.textContent=error.message==='Invalid login credentials'?'Wrong email or password.':error.message;err.style.display='block';return;}
+  S.user=data.user;
+  await loadProfile();
+  if(!S.profile?.client_slug){
+    err.textContent='This account is not linked to a client. Contact HKB Automations.';
+    err.style.display='block';
+    await sb.auth.signOut();return;
+  }
+  hide('loginPage');showApp();
+}
+
+async function logout(){
+  await sb.auth.signOut();clearInterval(S.timer);
+  S.user=null;S.profile=null;S.executions=[];
+  hide('appPage');show('loginPage');
+}
+
+function showApp(){
+  hide('loginPage');show('appPage');
+  const name=S.profile?.name||S.user?.email?.split('@')[0]||'Client';
+  document.getElementById('tbClientName').textContent='— '+name;
+  document.getElementById('tbAva').textContent=name.slice(0,2).toUpperCase();
+  document.getElementById('tbName').textContent=name;
+  fetchData(true);
+  clearInterval(S.timer);S.timer=setInterval(()=>fetchData(),15000);
+}
+
+async function fetchData(bar=false){
+  const workerUrl=S.profile?.worker_url;
+  if(!workerUrl){toast('No worker configured for your account. Contact HKB.','er');return;}
+  if(bar)animBar();
+  try{
+    const res=await fetch(workerUrl+'/executions',{signal:AbortSignal.timeout(8000)});
+    const data=await res.json();
+    S.executions=data.executions||[];
+    renderAll();
+  }catch(e){toast('Failed to fetch data — check connection','er');}
+}
+
+function renderAll(){
+  const exs=S.executions;
+  const names=[...new Set(exs.map(e=>e.workflowName))];
+  const total=exs.length,succ=exs.filter(e=>e.status==='success').length,errs=exs.filter(e=>e.status==='error').length;
+  const rate=total?Math.round((succ/total)*1000)/10:0;
+
+  // Stats
+  set('s-wf',names.length||'—');set('s-ex',total||'—');
+  document.getElementById('s-sr').innerHTML=total?`${rate}<span style="font-size:14px;color:var(--tx3)">%</span>`:'—';
+  set('s-er',errs||'—');
+  document.getElementById('s-er').style.color=errs?'var(--re)':'var(--tx)';
+  set('s-wfN',names.length?`<span class="cup">${names.length} active</span>`:'<span class="cnm">No data</span>');
+  set('s-exN',total?`<span class="cup">${total} total</span>`:'<span class="cnm">Waiting…</span>');
+  set('s-srN',rate>=90?'<span class="cup">↑ Great</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data</span>');
+  set('s-erN',errs?`<span class="cdn">↑ ${errs} failed</span>`:total?'<span class="cup">All clear ✅</span>':'<span class="cnm">No data</span>');
+  if(errs>0){set('talertTxt',`<b>${errs} workflow${errs>1?'s':''} failed</b> — check execution history below.`);document.getElementById('talert').style.display='flex';}
+
+  // Workflow cards
+  const g=getGrouped();const entries=Object.entries(g);
+  set('wfCount',entries.length+' workflows');
+  set('wfGrid',entries.length?entries.map(([name,wexs])=>{
+    const wsucc=wexs.filter(e=>e.status==='success').length;const werrs=wexs.filter(e=>e.status==='error').length;
+    const health=Math.round((wsucc/wexs.length)*100);const hc=hColor(health);
+    const last=wexs[0];const avg=Math.round(wexs.reduce((a,e)=>a+(e.durationMs||0),0)/wexs.length);
+    return`<div class="wf-card"><div class="wf-card-name">${esc(name)}</div><div class="wf-card-last"><span class="pill ${last.status==='success'?'p-ok':'p-er'}"><span class="pd"></span>${last.status==='success'?'OK':'Failed'}</span> · ${timeAgo(new Date(last.receivedAt))}</div><div class="wf-card-stats"><div class="wcs"><div class="wcs-val">${wexs.length}</div><div class="wcs-lbl">Runs</div></div><div class="wcs"><div class="wcs-val" style="color:${hc}">${health}%</div><div class="wcs-lbl">Health</div></div><div class="wcs"><div class="wcs-val" style="color:var(--vi)">${fmtDur(avg)}</div><div class="wcs-lbl">Avg</div></div></div><div class="wf-hbar"><div class="wf-hbar-fill" style="width:${health}%;background:${hc}"></div></div></div>`;
+  }).join(''):'<div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting for n8n data…</div>');
+
+  // Exec table
+  renderExecTable();
+
+  // Log
+  set('logList',exs.slice(0,12).map(e=>`<div class="li"><div class="li-ic">${e.status==='error'?'❌':'✅'}</div><div class="li-b"><div class="li-t">${esc(e.workflowName)}</div><div class="li-s">${fmtDur(e.durationMs)}${e.status==='error'?' · '+esc((e.errorMessage||'').slice(0,40)):''}</div></div><div class="li-time">${timeAgo(new Date(e.receivedAt))}</div></div>`).join('')||'<div class="empty"><div class="empty-i">📋</div>No activity</div>');
+
+  // Activity chart
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});
+  const cmax=Math.max(...counts,1);
+  set('actChart',days.map((d,i)=>`<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/cmax)*100)}%"></div></div><div class="acl">${d}</div></div>`).join(''));
+
+  // Health list
+  const healthRows=Object.entries(g).map(([n,e])=>{const h=Math.round((e.filter(x=>x.status==='success').length/e.length)*100);return{name:n,health:h};}).sort((a,b)=>a.health-b.health);
+  set('healthList',healthRows.length?healthRows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${hColor(h.health)}">${h.health}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.health}%;background:${hColor(h.health)}"></div></div></div>`).join(''):'<div class="empty"><div class="empty-i">❤️</div>No data</div>');
+}
+
+function renderExecTable(){
+  let filtered=[...S.executions];
+  if(S.filter==='success')filtered=filtered.filter(e=>e.status==='success');
+  if(S.filter==='error')filtered=filtered.filter(e=>e.status==='error');
+  set('execCount',filtered.length+' records');
+  if(!filtered.length){set('execBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length?'🔍':'📡'}</div>${S.executions.length?'No match':'Waiting…'}</div></td></tr>`);return;}
+  set('execBody',filtered.map(e=>{const pc=e.status==='success'?'p-ok':'p-er';const pl=e.status==='success'?'Success':'Failed';return`<tr><td style="font-weight:600">${esc(e.workflowName)}</td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:120px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join(''));
+}
+
+function setFilter(el,f){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.filter=f;renderExecTable();}
+function getGrouped(){const g={};S.executions.forEach(e=>{if(!g[e.workflowName])g[e.workflowName]=[];g[e.workflowName].push(e);});return g;}
+function hColor(h){return h>=80?'var(--mi)':h>=50?'var(--am)':'var(--re)';}
+function animBar(){const b=document.getElementById('progress');b.classList.remove('run','end');void b.offsetWidth;b.classList.add('run');setTimeout(()=>{b.classList.remove('run');b.classList.add('end');setTimeout(()=>b.classList.remove('end'),400);},9800);}
+function show(id){const el=document.getElementById(id);if(el)el.style.display='block';}
+function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
+function set(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
+function togglePw(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'👁':'🙈';}
+function timeAgo(d){if(!d||isNaN(d))return'—';const s=Math.floor((Date.now()-d)/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
+function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(5px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
+
+init();
+</script>
+</body>
+</html>
