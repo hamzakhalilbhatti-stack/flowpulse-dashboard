@@ -3,400 +3,324 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>FlowPulse — n8n Automation Intelligence</title>
-<meta name="description" content="Real-time n8n automation monitoring dashboard"/>
+<title>HKB Automations — Agency Dashboard</title>
 <meta name="theme-color" content="#060708"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-<meta name="apple-mobile-web-app-title" content="FlowPulse"/>
-<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="HKB Dashboard"/>
 <link rel="manifest" href="manifest.json"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
-  --bg:#060708;
-  --s1:#0c0e11;
-  --s2:#12151a;
-  --s3:#181c22;
-  --s4:#1e2229;
-  --b0:rgba(255,255,255,0.03);
-  --b1:rgba(255,255,255,0.06);
-  --b2:rgba(255,255,255,0.11);
-  --b3:rgba(255,255,255,0.18);
-  --tx:#f1f3f6;
-  --tx2:#9aa3b0;
-  --tx3:#5a6270;
+  --bg:#060708;--s1:#0c0e11;--s2:#12151a;--s3:#181c22;
+  --b0:rgba(255,255,255,0.03);--b1:rgba(255,255,255,0.06);--b2:rgba(255,255,255,0.11);--b3:rgba(255,255,255,0.18);
+  --tx:#f1f3f6;--tx2:#9aa3b0;--tx3:#5a6270;
   --vi:#7c3aed;--vi2:rgba(124,58,237,0.12);--vi3:rgba(124,58,237,0.06);
   --mi:#10b981;--mi2:rgba(16,185,129,0.1);--mi3:rgba(16,185,129,0.05);
   --am:#f59e0b;--am2:rgba(245,158,11,0.1);
   --re:#ef4444;--re2:rgba(239,68,68,0.08);
   --ic:#38bdf8;--ic2:rgba(56,189,248,0.1);
-  --sd:220px;
-  --rad:10px;
-  --rad2:14px;
+  --sd:224px;--rad:10px;--rad2:14px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
 body{font-family:'Bricolage Grotesque',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-
-/* GRAIN OVERLAY */
 body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.5}
-
-/* GRID BG */
 body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
 
-/* ── AUTH ── */
+/* AUTH */
 .auth-scene{position:fixed;inset:0;overflow:hidden;z-index:0}
-.auth-mesh{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(124,58,237,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(16,185,129,0.06) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(56,189,248,0.04) 0%,transparent 70%)}
+.auth-mesh{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 20%,rgba(124,58,237,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(16,185,129,0.06) 0%,transparent 60%)}
 .auth-lines{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px}
 .auth-wrap{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px}
-.auth-logo{display:flex;align-items:center;gap:11px;margin-bottom:36px}
-.auth-logo-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:21px;box-shadow:0 0 32px rgba(124,58,237,.25),0 0 64px rgba(124,58,237,.1)}
-.auth-logo-name{font-size:23px;font-weight:800;letter-spacing:-.8px}.auth-logo-name em{color:var(--ic);font-style:normal}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px}
+.auth-logo-mark{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 32px rgba(124,58,237,.25)}
+.auth-logo-name{font-size:16px;font-weight:800;letter-spacing:-.3px}
 .auth-logo-tag{font-size:10px;color:var(--tx3);letter-spacing:.6px;margin-top:2px}
-.auth-card{background:rgba(12,14,17,0.88);border:1px solid var(--b2);border-radius:18px;padding:36px;width:460px;max-width:95vw;backdrop-filter:blur(28px);box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,0.04);animation:cardIn .45s cubic-bezier(.4,0,.2,1)}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
-.auth-title{font-size:21px;font-weight:700;letter-spacing:-.5px;margin-bottom:5px}
-.auth-sub{font-size:12.5px;color:var(--tx2);margin-bottom:26px;line-height:1.65}
-.fg{display:flex;flex-direction:column;gap:5px;margin-bottom:13px}
-.fl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.auth-card{background:rgba(12,14,17,0.9);border:1px solid var(--b2);border-radius:18px;padding:34px;width:440px;max-width:95vw;backdrop-filter:blur(28px);box-shadow:0 32px 80px rgba(0,0,0,.5);animation:cardIn .4s cubic-bezier(.4,0,.2,1)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.auth-title{font-size:20px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px}
+.auth-sub{font-size:12px;color:var(--tx2);margin-bottom:22px;line-height:1.6}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.fl{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
 .fi-wrap{position:relative}
-.fi{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:11px 40px 11px 13px;color:var(--tx);font-size:13px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
+.fi{width:100%;background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:11px 13px;color:var(--tx);font-size:13px;font-family:'Bricolage Grotesque',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s}
 .fi:focus{border-color:var(--vi);box-shadow:0 0 0 3px rgba(124,58,237,.1)}
 .fi::placeholder{color:var(--tx3)}
-.fi-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:14px;cursor:pointer;transition:color .15s}
-.fi-eye:hover{color:var(--tx)}
-.fi-hint{font-size:10.5px;color:var(--tx2);margin-top:4px}
-.fi-hint.er{color:var(--re)}.fi-hint.ok{color:var(--mi)}
-.auth-btn{width:100%;padding:12px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--vi),#5b21b6);color:#fff;font-size:13.5px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;cursor:pointer;transition:opacity .2s,transform .15s,box-shadow .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:4px;box-shadow:0 4px 20px rgba(124,58,237,.3)}
-.auth-btn:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 8px 28px rgba(124,58,237,.4)}
+.fi-eye{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--tx3);cursor:pointer;font-size:14px}
+.auth-btn{width:100%;padding:12px;border-radius:9px;border:none;background:linear-gradient(135deg,var(--vi),#5b21b6);color:#fff;font-size:13px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;box-shadow:0 4px 20px rgba(124,58,237,.3);transition:opacity .2s,transform .15s}
+.auth-btn:hover{opacity:.88;transform:translateY(-1px)}
 .auth-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
-.auth-btn.ghost{background:var(--s2);color:var(--tx);border:1px solid var(--b2);box-shadow:none;margin-top:9px}
-.auth-btn.ghost:hover{background:var(--s3);opacity:1;box-shadow:none}
-.auth-switch{text-align:center;margin-top:18px;font-size:12.5px;color:var(--tx2)}
+.auth-switch{text-align:center;margin-top:16px;font-size:12px;color:var(--tx2)}
 .auth-switch a{color:var(--ic);cursor:pointer;font-weight:600}
-.auth-err{background:var(--re2);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 13px;font-size:12px;color:var(--re);margin-top:11px;display:none}
-.step-bar{display:flex;align-items:center;gap:6px;margin-bottom:22px}
-.step-node{display:flex;align-items:center;gap:5px}
-.step-dot{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:1.5px solid var(--b2);color:var(--tx3);transition:all .3s}
-.step-dot.on{background:var(--vi);border-color:var(--vi);color:#fff}
-.step-dot.dn{background:var(--mi);border-color:var(--mi);color:#fff}
-.step-lbl{font-size:10.5px;color:var(--tx3)}.step-lbl.on{color:var(--tx)}
-.step-seg{flex:1;height:1px;background:var(--b1)}
+.auth-err{background:var(--re2);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:9px 12px;font-size:12px;color:var(--re);margin-top:10px;display:none}
+.mrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* ── LOADING ── */
+/* LOADING */
 #loadingPage{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:600;gap:14px}
 .load-mark{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:24px;animation:breathe 1.8s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(124,58,237,.3)}50%{transform:scale(1.07);box-shadow:0 0 36px rgba(124,58,237,.5)}}
-.load-txt{font-size:12.5px;color:var(--tx3);letter-spacing:.3px}
+@keyframes breathe{0%,100%{transform:scale(1);box-shadow:0 0 20px rgba(124,58,237,.3)}50%{transform:scale(1.08);box-shadow:0 0 40px rgba(124,58,237,.5)}}
+.load-txt{font-size:12px;color:var(--tx3)}
 
-/* ── APP SHELL ── */
+/* APP */
 #appPage{display:none;position:relative;z-index:1}
 .progress{height:2px;background:linear-gradient(90deg,var(--vi),var(--ic),var(--mi));position:fixed;top:0;left:var(--sd);right:0;z-index:300;transform:scaleX(0);transform-origin:left;transition:none}
 .progress.run{transform:scaleX(1);transition:transform 9s linear}
 .progress.end{opacity:0;transition:opacity .4s}
 
-/* ── SIDEBAR ── */
+/* SIDEBAR */
 .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sd);background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;z-index:100}
 .sidebar::after{content:'';position:absolute;top:0;right:-1px;width:1px;height:100%;background:linear-gradient(180deg,transparent,rgba(124,58,237,.3) 40%,rgba(16,185,129,.2) 80%,transparent)}
-.s-logo{padding:20px 18px 16px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:10px}
-.s-logo-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 0 14px rgba(124,58,237,.2);flex-shrink:0}
-.s-logo-name{font-size:15.5px;font-weight:800;letter-spacing:-.4px;flex:1}.s-logo-name em{color:var(--ic);font-style:normal}
-.s-live{display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;color:var(--mi);letter-spacing:.5px}
+.s-logo{padding:18px 16px 14px;border-bottom:1px solid var(--b0);display:flex;align-items:center;gap:9px}
+.s-logo-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 0 12px rgba(124,58,237,.2);flex-shrink:0}
+.s-logo-texts{flex:1;min-width:0}
+.s-logo-name{font-size:11.5px;font-weight:800;letter-spacing:-.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-logo-tag{font-size:9px;color:var(--tx3)}
+.s-live{display:flex;align-items:center;gap:3px;font-size:9px;font-weight:700;color:var(--mi)}
 .s-live-dot{width:5px;height:5px;border-radius:50%;background:var(--mi);box-shadow:0 0 5px var(--mi);animation:blink 2s infinite}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-.s-nav{flex:1;padding:10px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
+.s-nav{flex:1;padding:8px;overflow-y:auto;display:flex;flex-direction:column;gap:1px}
 .s-nav::-webkit-scrollbar{width:0}
-.s-sec{font-size:9.5px;font-weight:600;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;padding:10px 9px 4px}
-.ni{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;position:relative;border:1px solid transparent}
+.s-sec{font-size:9px;font-weight:600;color:var(--tx3);letter-spacing:1.2px;text-transform:uppercase;padding:10px 9px 3px;display:flex;align-items:center;justify-content:space-between}
+.s-sec-add{cursor:pointer;color:var(--vi);font-size:10px;letter-spacing:0;text-transform:none;font-weight:700}
+.ni{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;font-size:12px;font-weight:500;color:var(--tx2);cursor:pointer;transition:all .15s;position:relative;border:1px solid transparent}
 .ni:hover{background:var(--s2);color:var(--tx);border-color:var(--b1)}
 .ni.active{background:var(--vi2);color:var(--tx);border-color:rgba(124,58,237,.2)}
 .ni.active::before{content:'';position:absolute;left:-1px;top:20%;bottom:20%;width:2px;background:var(--vi);border-radius:0 2px 2px 0}
-.ni-ic{width:16px;text-align:center;font-size:13px;flex-shrink:0}
-.ni-badge{margin-left:auto;background:var(--re);color:#fff;font-size:8.5px;font-weight:700;padding:2px 6px;border-radius:99px;letter-spacing:.2px}
-.s-bot{padding:10px;border-top:1px solid var(--b0)}
-.s-install{width:100%;padding:9px 12px;border-radius:8px;border:1px solid rgba(124,58,237,.25);background:var(--vi3);color:var(--ic);font-size:11.5px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;display:none;align-items:center;justify-content:center;gap:7px;margin-bottom:8px;transition:all .2s}
-.s-install:hover{background:var(--vi2);border-color:rgba(124,58,237,.4)}
-.s-user{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;background:var(--s2);border:1px solid var(--b1)}
-.s-ava{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:700;flex-shrink:0}
+.ni-ic{width:15px;text-align:center;font-size:12px;flex-shrink:0}
+.ni-badge{margin-left:auto;background:var(--re);color:#fff;font-size:8px;font-weight:700;padding:2px 5px;border-radius:99px}
+.ni-count{margin-left:auto;font-size:9.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
+.client-nav-item{display:flex;align-items:center;gap:8px;padding:6px 9px;border-radius:7px;font-size:11.5px;color:var(--tx2);cursor:pointer;transition:all .15s;border:1px solid transparent}
+.client-nav-item:hover{background:var(--s2);color:var(--tx)}
+.client-nav-item.active{background:var(--vi2);color:var(--tx)}
+.client-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.client-name-nav{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.client-health-nav{font-size:9px;font-family:'IBM Plex Mono',monospace}
+.s-bot{padding:8px;border-top:1px solid var(--b0)}
+.s-install{width:100%;padding:8px 10px;border-radius:7px;border:1px solid rgba(124,58,237,.25);background:var(--vi3);color:var(--ic);font-size:11px;font-weight:600;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;display:none;align-items:center;justify-content:center;gap:6px;margin-bottom:7px;transition:all .2s}
+.s-install:hover{background:var(--vi2)}
+.s-user{display:flex;align-items:center;gap:8px;padding:9px;border-radius:8px;background:var(--s2);border:1px solid var(--b1)}
+.s-ava{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
 .s-uinfo{flex:1;min-width:0}
-.s-uname{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s-uemail{font-size:10px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s-signout{color:var(--tx3);font-size:13px;cursor:pointer;padding:4px;border-radius:5px;transition:color .15s}
+.s-uname{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-uemail{font-size:9.5px;color:var(--tx3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-signout{color:var(--tx3);font-size:13px;cursor:pointer;padding:3px;border-radius:4px;transition:color .15s}
 .s-signout:hover{color:var(--re)}
 
-/* ── MAIN ── */
+/* MAIN */
 .main{margin-left:var(--sd);min-height:100vh}
-.topbar{height:54px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--b0);background:rgba(6,7,8,.8);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50;gap:12px}
-.tb-title{font-size:14.5px;font-weight:700;flex:1;letter-spacing:-.2px}.tb-sub{color:var(--tx3);font-weight:400;font-size:12px;margin-left:6px}
-.tb-r{display:flex;align-items:center;gap:8px}
-.search-box{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:6px 11px;width:185px;transition:border-color .15s,width .2s}
-.search-box:focus-within{border-color:var(--vi);width:210px}
-.search-box input{background:none;border:none;outline:none;color:var(--tx);font-size:12px;width:100%;font-family:'Bricolage Grotesque',sans-serif}
-.search-box input::placeholder{color:var(--tx3)}
-.tb-badge{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--mi);background:var(--mi3);border:1px solid rgba(16,185,129,.15);padding:4px 9px;border-radius:99px}
+.topbar{height:52px;display:flex;align-items:center;padding:0 20px;border-bottom:1px solid var(--b0);background:rgba(6,7,8,.85);backdrop-filter:blur(20px);position:sticky;top:0;z-index:50;gap:10px}
+.tb-title{font-size:14px;font-weight:700;flex:1;letter-spacing:-.2px}
+.tb-sub{color:var(--tx3);font-weight:400;font-size:12px;margin-left:6px}
+.tb-r{display:flex;align-items:center;gap:7px}
+.tb-badge{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:var(--mi);background:var(--mi3);border:1px solid rgba(16,185,129,.15);padding:4px 8px;border-radius:99px}
 .tb-badge-dot{width:5px;height:5px;border-radius:50%;background:var(--mi);animation:blink 2s infinite}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
 .btn:hover{background:var(--s3);border-color:var(--b3)}
-.btn-vi{background:linear-gradient(135deg,var(--vi),#5b21b6);border-color:transparent;color:#fff;box-shadow:0 4px 16px rgba(124,58,237,.25)}
-.btn-vi:hover{opacity:.88;border-color:transparent;box-shadow:0 6px 20px rgba(124,58,237,.35)}
-.page{display:none;padding:22px;animation:up .3s ease}.page.active{display:block}
-@keyframes up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.btn-vi{background:linear-gradient(135deg,var(--vi),#5b21b6);border-color:transparent;color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.25)}
+.btn-vi:hover{opacity:.88;border-color:transparent}
+.btn-mi{background:linear-gradient(135deg,var(--mi),#059669);border-color:transparent;color:#fff}
+.btn-re{background:var(--re2);border-color:rgba(239,68,68,.2);color:var(--re)}
+.page{display:none;padding:20px;animation:up .3s ease}.page.active{display:block}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
-/* ── STAT CARDS ── */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:up .5s ease both}
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px}
+.stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:17px 18px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s;animation:up .4s ease both}
 .stat:nth-child(1){animation-delay:.04s}.stat:nth-child(2){animation-delay:.08s}.stat:nth-child(3){animation-delay:.12s}.stat:nth-child(4){animation-delay:.16s}
 .stat:hover{border-color:var(--b2);transform:translateY(-2px)}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.06),transparent)}
-.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-.stat-lbl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
-.stat-ic{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px}
-.ic-vi{background:var(--vi2)}.ic-mi{background:var(--mi2)}.ic-re{background:var(--re2)}.ic-am{background:var(--am2)}.ic-ic{background:var(--ic2)}
-.stat-val{font-size:30px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-family:'IBM Plex Mono',monospace;margin-bottom:6px}
-.stat-note{font-size:11px;color:var(--tx3)}.cup{color:var(--mi)}.cdn{color:var(--re)}.cnm{color:var(--tx3)}
-.spark{display:flex;align-items:flex-end;gap:2px;height:22px;margin-top:10px}
-.sb{flex:1;border-radius:2px;transition:height .3s}.sb.vi{background:rgba(124,58,237,.35)}.sb.mi{background:rgba(16,185,129,.35)}.sb.re{background:rgba(239,68,68,.35)}.sb.ic{background:rgba(56,189,248,.3)}
+.stat-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
+.stat-lbl{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.stat-ic{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.ic-vi{background:var(--vi2)}.ic-mi{background:var(--mi2)}.ic-re{background:var(--re2)}.ic-am{background:var(--am2)}
+.stat-val{font-size:28px;font-weight:800;letter-spacing:-1.5px;line-height:1;font-family:'IBM Plex Mono',monospace;margin-bottom:5px}
+.stat-note{font-size:10.5px;color:var(--tx3)}.cup{color:var(--mi)}.cdn{color:var(--re)}.cnm{color:var(--tx3)}
+.spark{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:9px}
+.sb{flex:1;border-radius:2px}
 
-/* ── LAYOUT ── */
-.g2{display:grid;grid-template-columns:1fr 300px;gap:14px}
-.rcol{display:flex;flex-direction:column;gap:14px}
-.b2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 285px;gap:13px}
+.rcol{display:flex;flex-direction:column;gap:13px}
+.b2{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-top:13px}
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);overflow:hidden;margin-bottom:13px}
+.card:last-child{margin-bottom:0}
+.card::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent)}
+.ch{padding:13px 17px;border-bottom:1px solid var(--b0);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:12px;font-weight:700}
+.cm{font-size:10.5px;color:var(--tx3);display:flex;align-items:center;gap:5px}
 
-/* ── CARDS ── */
-.card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);overflow:hidden;margin-bottom:14px}
-.card:last-child,.card-last{margin-bottom:0}
-.card::before{content:'';display:block;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.05),transparent)}
-.ch{padding:14px 18px;border-bottom:1px solid var(--b0);display:flex;align-items:center;justify-content:space-between}
-.ct{font-size:12.5px;font-weight:700;letter-spacing:-.1px}
-.cm{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:5px}
+/* CLIENTS GRID */
+.clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:13px}
+.client-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:20px;transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden;cursor:pointer}
+.client-card:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:0 10px 36px rgba(0,0,0,.3)}
+.cc-stripe{position:absolute;top:0;left:0;right:0;height:2px}
+.cc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px}
+.cc-avatar{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff;flex-shrink:0}
+.cc-name{font-size:13.5px;font-weight:700;margin-bottom:2px}
+.cc-slug{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
+.cc-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.cs-item{display:flex;flex-direction:column;gap:2px}
+.cs-val{font-size:16px;font-weight:700;font-family:'IBM Plex Mono',monospace}
+.cs-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
+.cc-bar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:12px}
+.cc-bar-fill{height:100%;border-radius:2px;transition:width .8s}
+.cc-footer{display:flex;justify-content:space-between;align-items:center;margin-top:7px}
+.cc-health{font-size:10.5px;font-weight:600}
+.cc-actions{display:flex;gap:4px}
+.cc-actions button{padding:4px 7px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--tx3);font-family:'Bricolage Grotesque',sans-serif;transition:all .15s}
+.cc-actions button:hover{background:var(--s3);color:var(--tx)}
+.add-client-card{background:var(--b0);border:1px dashed var(--b2);border-radius:var(--rad2);padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:all .2s;min-height:175px}
+.add-client-card:hover{background:var(--s2);border-color:var(--vi);border-style:solid}
+.add-client-icon{width:38px;height:38px;border-radius:10px;background:var(--vi3);border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;font-size:19px}
 
-/* ── TABS ── */
-.tabs{display:flex;padding:0 18px;background:var(--b0);border-bottom:1px solid var(--b0)}
-.tab{padding:8px 12px;font-size:11px;font-weight:600;cursor:pointer;color:var(--tx3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+/* CLIENT DETAIL */
+.cd-header{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:20px;margin-bottom:14px;display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+.cd-avatar{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0}
+.cd-info{flex:1;min-width:0}
+.cd-name{font-size:17px;font-weight:800;letter-spacing:-.4px}
+.cd-meta{font-size:11px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.cd-actions{display:flex;gap:7px;flex-wrap:wrap}
+
+/* TABLES */
+.tabs{display:flex;padding:0 17px;background:var(--b0);border-bottom:1px solid var(--b0)}
+.tab{padding:8px 11px;font-size:11px;font-weight:600;cursor:pointer;color:var(--tx3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
 .tab.active{color:var(--vi);border-bottom-color:var(--vi)}.tab:hover:not(.active){color:var(--tx)}
-
-/* ── TABLE ── */
 .tbl{width:100%;border-collapse:collapse}
-.tbl th{text-align:left;font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;padding:10px 18px;border-bottom:1px solid var(--b1);background:var(--b0)}
-.tbl td{padding:11px 18px;font-size:12px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
+.tbl th{text-align:left;font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.9px;padding:9px 17px;border-bottom:1px solid var(--b1);background:var(--b0)}
+.tbl td{padding:10px 17px;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,.025);vertical-align:middle}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover td{background:var(--b0)}
-.wn{display:flex;flex-direction:column;gap:2px}
-.wn-m{font-weight:600;font-size:12.5px}
-.wn-s{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
-
-/* ── PILLS ── */
-.pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700}
-.pd{width:5px;height:5px;border-radius:50%}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border-radius:99px;font-size:9.5px;font-weight:700}
+.pd{width:4px;height:4px;border-radius:50%}
 .p-ok{background:var(--mi2);color:var(--mi)}.p-ok .pd{background:var(--mi)}
 .p-er{background:var(--re2);color:var(--re)}.p-er .pd{background:var(--re)}
 .p-mu{background:rgba(90,98,112,.12);color:var(--tx3)}.p-mu .pd{background:var(--tx3)}
+.mono{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx3)}
 
-/* ── HEALTH BAR ── */
-.hb{width:70px}
-.hbr{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-bottom:4px}
-.hbf{height:100%;border-radius:2px;transition:width .8s}
-.hpct{font-size:10px;font-family:'IBM Plex Mono',monospace}
-.mono{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--tx3)}
-
-/* ── CONNECTION PANEL ── */
-.connp{padding:15px 18px}
-.conn-status{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600}
-.conn-status.ok{color:var(--mi)}.conn-status.er{color:var(--re)}.conn-status.idle{color:var(--tx3)}
-.conn-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.conn-dot.ok{background:var(--mi);box-shadow:0 0 6px var(--mi)}.conn-dot.er{background:var(--re)}.conn-dot.idle{background:var(--tx3)}
-.conn-url{font-size:10.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wh-lbl{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;margin-top:13px}
-.wh-url{background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:8px 11px;font-size:10.5px;font-family:'IBM Plex Mono',monospace;color:var(--ic);cursor:pointer;word-break:break-all;transition:background .15s;margin-bottom:10px}
-.wh-url:hover{background:var(--s3)}
-
-/* ── LOG ── */
-.log-list{max-height:250px;overflow-y:auto}
-.log-list::-webkit-scrollbar{width:3px}.log-list::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
-.li{display:flex;align-items:flex-start;gap:9px;padding:9px 16px;border-bottom:1px solid rgba(255,255,255,.02)}
-.li:last-child{border-bottom:none}
-.li-ic{font-size:11px;flex-shrink:0;margin-top:1px}.li-b{flex:1;min-width:0}
-.li-t{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.li-s{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.li-time{font-size:9.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
-
-/* ── HEALTH LIST ── */
-.hl{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
-.hr{display:flex;flex-direction:column;gap:4px}
-.hr-top{display:flex;justify-content:space-between;font-size:11.5px}
-.hr-n{font-weight:600}.hr-v{font-family:'IBM Plex Mono',monospace;font-size:10.5px}
+/* HEALTH */
+.hl{padding:11px 14px;display:flex;flex-direction:column;gap:9px}
+.hr{display:flex;flex-direction:column;gap:3px}
+.hr-top{display:flex;justify-content:space-between;font-size:11px}
+.hr-n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px}
+.hr-v{font-family:'IBM Plex Mono',monospace;font-size:10px;flex-shrink:0}
 .hr-t{height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
-.hr-f{height:100%;border-radius:2px;transition:width 1s cubic-bezier(.4,0,.2,1)}
+.hr-f{height:100%;border-radius:2px;transition:width 1s}
 
-/* ── ACTIVITY CHART ── */
-.act{display:flex;align-items:flex-end;gap:4px;height:64px;padding:10px 16px}
-.ac{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
-.acw{flex:1;display:flex;align-items:flex-end;width:100%}
-.acb{width:100%;border-radius:3px 3px 0 0;background:linear-gradient(180deg,rgba(124,58,237,.55),rgba(124,58,237,.12));min-height:3px}
-.acl{font-size:8.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
+/* LOG */
+.log-list{max-height:240px;overflow-y:auto}
+.log-list::-webkit-scrollbar{width:3px}.log-list::-webkit-scrollbar-thumb{background:var(--s3);border-radius:2px}
+.li{display:flex;align-items:flex-start;gap:8px;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.02)}
+.li:last-child{border-bottom:none}
+.li-ic{font-size:10px;flex-shrink:0;margin-top:1px}
+.li-b{flex:1;min-width:0}
+.li-t{font-size:11px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li-s{font-size:9.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.li-time{font-size:9px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
 
-/* ── ERROR LIST ── */
-.el{padding:12px 15px;display:flex;flex-direction:column;gap:7px}
-.ei{display:flex;align-items:flex-start;gap:8px;padding:9px 11px;border-radius:8px;background:var(--re2);border:1px solid rgba(239,68,68,.1)}
-.edot{width:5px;height:5px;border-radius:50%;background:var(--re);margin-top:4px;flex-shrink:0}
-.eb{flex:1;min-width:0}
-.en{font-size:11.5px;font-weight:600}
-.em{font-size:10px;color:var(--tx3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.et{font-size:9.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;flex-shrink:0}
+/* CONNECTION */
+.conn-status{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600}
+.conn-status.ok{color:var(--mi)}.conn-status.er{color:var(--re)}.conn-status.idle{color:var(--tx3)}
+.conn-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.conn-dot.ok{background:var(--mi);box-shadow:0 0 5px var(--mi)}.conn-dot.er{background:var(--re)}.conn-dot.idle{background:var(--tx3)}
+.wh-url{background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:8px 10px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--ic);cursor:pointer;word-break:break-all;transition:background .15s;margin:6px 0}
+.wh-url:hover{background:var(--s3)}
+.sp-link-box{background:var(--s2);border:1px solid var(--b1);border-radius:7px;padding:8px 10px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--ic);cursor:pointer;word-break:break-all;transition:background .15s;margin:5px 0}
+.sp-link-box:hover{background:var(--s3)}
+.conn-lbl{font-size:9px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-top:11px;margin-bottom:3px}
 
-/* ── ALERT BANNER ── */
-.talert{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);border-radius:9px;padding:10px 15px;display:none;align-items:center;gap:9px;font-size:12.5px;margin-bottom:14px}
+/* ALERT BANNER */
+.talert{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);border-radius:9px;padding:9px 13px;display:none;align-items:center;gap:8px;font-size:12px;margin-bottom:13px}
 .talert b{color:var(--re)}.talert-x{cursor:pointer;color:var(--tx3);font-size:18px;line-height:1;margin-left:auto}
 
-/* ── WF GRID ── */
-.wf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:12px;margin-bottom:14px}
-.wf-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:18px;transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden}
-.wf-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
-.wf-card:hover{border-color:var(--b2);transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3)}
-.wf-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px}
-.wf-card-name{font-size:13px;font-weight:700}
-.wf-card-id{font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;margin-top:2px}
-.wf-card-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
-.wf-stat{display:flex;flex-direction:column;gap:2px}
-.wf-stat-val{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace}
-.wf-stat-lbl{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
-.wf-hbar{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;margin-top:11px}
-.wf-hbar-fill{height:100%;border-radius:2px;transition:width .8s}
-
-/* ── EXEC FILTERS ── */
-.exec-filters{display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap}
-.filter-btn{padding:5px 12px;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s1);color:var(--tx2);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
-.filter-btn.active{background:var(--vi2);border-color:rgba(124,58,237,.3);color:var(--tx)}
-.filter-btn:hover:not(.active){background:var(--s2)}
-
-/* ── HEALTH PAGE ── */
-.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.health-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:20px}
-.health-card-name{font-size:13px;font-weight:700;margin-bottom:14px}
-.health-big-score{font-size:44px;font-weight:800;letter-spacing:-2px;line-height:1;font-family:'IBM Plex Mono',monospace;margin-bottom:4px}
-.health-sublbl{font-size:10px;color:var(--tx3)}
-.health-bars{display:flex;flex-direction:column;gap:9px;margin-top:14px}
-.health-bar-row{display:flex;flex-direction:column;gap:3px}
-.health-bar-top{display:flex;justify-content:space-between;font-size:10.5px}
-.health-bar-name{color:var(--tx3)}.health-bar-val{font-family:'IBM Plex Mono',monospace;font-size:10px}
-.health-bar-track{height:3px;background:var(--s3);border-radius:2px;overflow:hidden}
-.health-bar-fill{height:100%;border-radius:2px;transition:width .8s}
-
-/* ── ALERTS PAGE ── */
-.alert-item{display:flex;align-items:flex-start;gap:12px;padding:15px 18px;border-bottom:1px solid var(--b0)}
-.alert-item:last-child{border-bottom:none}
-.alert-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;background:var(--re2)}
-.alert-body{flex:1}.alert-title{font-size:12.5px;font-weight:600}.alert-msg{font-size:11px;color:var(--tx3);margin-top:3px;line-height:1.5}
-.alert-meta{display:flex;gap:8px;margin-top:6px;font-size:10px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
-
-/* ── ANALYTICS ── */
-.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
-.big-chart{display:flex;align-items:flex-end;gap:5px;height:95px;padding:14px 16px 12px}
-.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
-.bcw{flex:1;display:flex;align-items:flex-end;width:100%}
-.bcb{width:100%;border-radius:3px 3px 0 0;min-height:3px}
-.bcl{font-size:8px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
-.analytics-stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:20px}
-.analytics-stat-val{font-size:28px;font-weight:800;letter-spacing:-1px;font-family:'IBM Plex Mono',monospace;margin-bottom:4px}
-.analytics-stat-lbl{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
-.top-list{padding:0}
-.top-item{display:flex;align-items:center;gap:11px;padding:11px 18px;border-bottom:1px solid var(--b0)}
-.top-item:last-child{border-bottom:none}
-.top-rank{width:20px;height:20px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--tx3);flex-shrink:0}
-.top-rank.g{background:var(--am2);color:var(--am)}
-.top-name{flex:1;font-size:12px;font-weight:600}.top-val{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--tx3)}
-
-/* ── SETTINGS ── */
-.settings-sec{margin-bottom:20px}
-.settings-sec-title{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:9px;padding:0 2px}
+/* SETTINGS */
+.settings-sec{margin-bottom:18px}
+.settings-sec-title{font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .settings-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);overflow:hidden}
-.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--b0)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid var(--b0)}
 .settings-row:last-child{border-bottom:none}
-.settings-row-l{display:flex;flex-direction:column;gap:3px}
-.settings-row-name{font-size:12.5px;font-weight:600}
-.settings-row-desc{font-size:11px;color:var(--tx3)}
-.settings-val{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--ic)}
+.settings-row-l{display:flex;flex-direction:column;gap:2px}
+.settings-row-name{font-size:12px;font-weight:600}
+.settings-row-desc{font-size:10.5px;color:var(--tx3)}
+.settings-val{font-size:11.5px;font-family:'IBM Plex Mono',monospace;color:var(--ic)}
 
-/* ── STATUS PAGE ── */
-.sp-link-box{background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:10px 13px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--ic);cursor:pointer;word-break:break-all;transition:background .15s}
-.sp-link-box:hover{background:var(--s3)}
-.sp-wf-chip{background:var(--vi3);border:1px solid rgba(124,58,237,.2);border-radius:99px;padding:3px 10px;font-size:11px;color:var(--ic)}
-
-/* ── MODAL ── */
+/* MODAL */
 .mbg{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);z-index:800;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
 .mbg.open{opacity:1;pointer-events:all}
-.modal{background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:24px;width:440px;max-width:95vw;transform:scale(.96);transition:transform .2s;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal{background:var(--s1);border:1px solid var(--b2);border-radius:16px;padding:22px;width:480px;max-width:95vw;transform:scale(.96);transition:transform .2s;box-shadow:0 24px 64px rgba(0,0,0,.5)}
 .mbg.open .modal{transform:scale(1)}
-.mh{font-size:15px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px}
-.ms{font-size:12px;color:var(--tx3);margin-bottom:18px}
-.mac{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.mh{font-size:15px;font-weight:800;margin-bottom:3px;letter-spacing:-.3px}
+.ms{font-size:11.5px;color:var(--tx3);margin-bottom:16px}
+.mac{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
 
-/* ── SHARE MODAL ── */
-.share-wf-list{display:flex;flex-direction:column;gap:5px;max-height:200px;overflow-y:auto;background:var(--s2);border:1px solid var(--b1);border-radius:9px;padding:9px}
-.share-wf-list::-webkit-scrollbar{width:3px}.share-wf-list::-webkit-scrollbar-thumb{background:var(--s3)}
+/* EXEC FILTERS */
+.exec-filters{display:flex;gap:6px;flex-wrap:wrap}
+.filter-btn{padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s1);color:var(--tx2);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
+.filter-btn.active{background:var(--vi2);border-color:rgba(124,58,237,.3);color:var(--tx)}
 
-/* ── EMPTY ── */
-.empty{padding:28px;text-align:center;color:var(--tx3);font-size:12.5px}
-.empty-i{font-size:24px;margin-bottom:7px}
+/* EMPTY */
+.empty{padding:24px;text-align:center;color:var(--tx3);font-size:12px}
+.empty-i{font-size:22px;margin-bottom:6px}
 
-/* ── TOASTS ── */
-.tw{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:6px;z-index:9998}
-.toast{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:10px 13px;font-size:12px;font-weight:500;display:flex;align-items:center;gap:7px;min-width:210px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
-@keyframes toastIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* TOASTS */
+.tw{position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:5px;z-index:9998}
+.toast{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:9px 12px;font-size:11.5px;font-weight:500;display:flex;align-items:center;gap:6px;min-width:200px;box-shadow:0 8px 28px rgba(0,0,0,.4);animation:toastIn .3s ease}
+@keyframes toastIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .toast.ok{border-color:rgba(16,185,129,.25)}.toast.er{border-color:rgba(239,68,68,.25)}.toast.in{border-color:rgba(124,58,237,.25)}
-
-/* ── SPIN ── */
-.spin{display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.15);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid rgba(255,255,255,.15);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── PWA BANNER ── */
-.pwa-banner{display:none;position:fixed;bottom:16px;left:12px;right:12px;background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:14px 16px;align-items:center;gap:12px;z-index:9990;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:up .4s ease}
-.pwa-mark{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+/* PWA */
+.pwa-banner{display:none;position:fixed;bottom:14px;left:12px;right:12px;background:var(--s1);border:1px solid var(--b2);border-radius:14px;padding:13px 15px;align-items:center;gap:11px;z-index:9990;box-shadow:0 8px 32px rgba(0,0,0,.5);animation:up .4s ease}
+.pwa-mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
 
-/* ── RESPONSIVE ── */
-@media(max-width:1100px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.analytics-grid{grid-template-columns:1fr}}
-@media(max-width:768px){
-  .sidebar{display:none}.main{margin-left:0;padding-top:54px;padding-bottom:64px}
-  .topbar{display:none}
-  .page{padding:12px}
-  .stats{grid-template-columns:repeat(2,1fr);gap:8px}
-  .stat{padding:13px 14px}.stat-val{font-size:24px}
-  .g2{grid-template-columns:1fr}.b2{grid-template-columns:1fr}
-  .wf-grid{grid-template-columns:1fr}.health-grid{grid-template-columns:1fr}
-  .analytics-grid{grid-template-columns:1fr}
-  .settings-row{flex-direction:column;align-items:flex-start;gap:8px}
-  .tbl th,.tbl td{padding:9px 12px;font-size:11px}
-  .progress{left:0}
-  .mob-topbar{display:flex}.mob-nav{display:block}
-}
-@media(max-width:520px){.stats{grid-template-columns:1fr 1fr}}
-
-/* ── MOBILE NAV ── */
-.mob-topbar{display:none;position:fixed;top:0;left:0;right:0;height:54px;background:rgba(6,7,8,.95);border-bottom:1px solid var(--b1);backdrop-filter:blur(20px);z-index:150;padding:0 16px;align-items:center;justify-content:space-between}
-.mob-logo{display:flex;align-items:center;gap:7px}
-.mob-logo-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:12px}
-.mob-logo-name{font-size:15px;font-weight:800;letter-spacing:-.4px}.mob-logo-name em{color:var(--ic);font-style:normal}
-.mob-r{display:flex;align-items:center;gap:7px}
-.mob-live{display:flex;align-items:center;gap:4px;font-size:9.5px;font-weight:700;color:var(--mi);background:var(--mi3);border:1px solid rgba(16,185,129,.15);padding:4px 8px;border-radius:99px}
-.mob-sync{width:30px;height:30px;border-radius:8px;background:var(--s2);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
-.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:60px;background:rgba(12,14,17,.97);border-top:1px solid var(--b1);backdrop-filter:blur(20px);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+/* MOBILE */
+.mob-topbar{display:none;position:fixed;top:0;left:0;right:0;height:52px;background:rgba(6,7,8,.95);border-bottom:1px solid var(--b1);backdrop-filter:blur(20px);z-index:150;padding:0 14px;align-items:center;justify-content:space-between}
+.mob-logo-name{font-size:14px;font-weight:800;letter-spacing:-.3px}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:58px;background:rgba(12,14,17,.97);border-top:1px solid var(--b1);backdrop-filter:blur(20px);z-index:200;padding-bottom:env(safe-area-inset-bottom)}
 .mob-nav-inner{display:flex;align-items:stretch;height:100%}
-.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 2px;position:relative}
+.mn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;padding:5px 2px;position:relative}
 .mn-item.active .mn-icon,.mn-item.active .mn-lbl{color:var(--vi)}
-.mn-icon{font-size:17px;color:var(--tx3);transition:color .15s}
-.mn-lbl{font-size:9px;font-weight:600;color:var(--tx3);transition:color .15s}
-.mn-badge{position:absolute;top:4px;right:calc(50% - 16px);background:var(--re);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:99px}
+.mn-icon{font-size:16px;color:var(--tx3);transition:color .15s}
+.mn-lbl{font-size:8.5px;font-weight:600;color:var(--tx3);transition:color .15s}
+.mn-badge{position:absolute;top:4px;right:calc(50% - 14px);background:var(--re);color:#fff;font-size:7.5px;font-weight:700;padding:1px 4px;border-radius:99px}
+
+@media(max-width:1100px){.g2{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){
+  .sidebar{display:none}.main{margin-left:0;padding-top:52px;padding-bottom:62px}
+  .topbar{display:none}.page{padding:12px}
+  .stats{grid-template-columns:1fr 1fr;gap:8px}.stat{padding:12px 13px}.stat-val{font-size:22px}
+  .g2{grid-template-columns:1fr}.b2{grid-template-columns:1fr}
+  .clients-grid{grid-template-columns:1fr}.progress{left:0}
+  .mob-topbar{display:flex}.mob-nav{display:block}
+  .cd-header{flex-direction:column;align-items:flex-start}
+  .mrow{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div id="loadingPage">
-  <div class="load-mark">⚡</div>
-  <div class="load-txt">Initializing FlowPulse…</div>
+<div id="loadingPage"><div class="load-mark">⚡</div><div class="load-txt">Loading HKB Dashboard…</div></div>
+
+<!-- LOGIN -->
+<div id="loginPage" style="display:none">
+  <div class="auth-scene"><div class="auth-mesh"></div><div class="auth-lines"></div></div>
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">⚡</div>
+      <div><div class="auth-logo-name">THE HKB AUTOMATIONS</div><div class="auth-logo-tag">Agency Dashboard · Multi-Client n8n Monitoring</div></div>
+    </div>
+    <div class="auth-card">
+      <div class="auth-title">Agency Sign In</div>
+      <div class="auth-sub">Manage all your clients' n8n workflows from one place.</div>
+      <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="li-email" placeholder="you@hkbautomations.com"/></div>
+      <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="li-pass" onkeydown="if(event.key==='Enter')doLogin()"/><span class="fi-eye" onclick="togglePw('li-pass',this)">👁</span></div></div>
+      <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign In →</button>
+      <div class="auth-err" id="li-err"></div>
+      <div class="auth-switch">No account? <a onclick="showSignup()">Create agency account</a></div>
+    </div>
+  </div>
 </div>
 
 <!-- SIGNUP -->
@@ -405,309 +329,236 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
   <div class="auth-wrap">
     <div class="auth-logo">
       <div class="auth-logo-mark">⚡</div>
-      <div><div class="auth-logo-name">Flow<em>Pulse</em></div><div class="auth-logo-tag">n8n Automation Intelligence</div></div>
+      <div><div class="auth-logo-name">THE HKB AUTOMATIONS</div><div class="auth-logo-tag">Create Agency Account</div></div>
     </div>
     <div class="auth-card">
-      <div class="step-bar">
-        <div class="step-node"><div class="step-dot on" id="sd1">1</div><div class="step-lbl on" style="margin-left:5px">Account</div></div>
-        <div class="step-seg"></div>
-        <div class="step-node"><div class="step-dot" id="sd2">2</div><div class="step-lbl" style="margin-left:5px">Connect</div></div>
-        <div class="step-seg"></div>
-        <div class="step-node"><div class="step-dot" id="sd3">3</div><div class="step-lbl" style="margin-left:5px">Done</div></div>
-      </div>
-      <div id="su-s1">
-        <div class="auth-title">Create your account</div>
-        <div class="auth-sub">Stored securely in Supabase — access from any device.</div>
-        <div class="fg"><div class="fl">Full Name</div><input class="fi" type="text" id="su-name" placeholder="Your name"/></div>
-        <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="su-email" placeholder="you@company.com"/></div>
-        <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters" oninput="checkStrength(this.value)"/><span class="fi-eye" onclick="togglePw('su-pass',this)">👁</span></div><div class="fi-hint" id="passHint">Enter a password</div></div>
-        <div class="fg"><div class="fl">Confirm Password</div><div class="fi-wrap"><input class="fi" type="password" id="su-pass2" placeholder="Repeat password"/><span class="fi-eye" onclick="togglePw('su-pass2',this)">👁</span></div></div>
-        <button class="auth-btn" id="su-btn1" onclick="suStep1()">Continue →</button>
-        <div class="auth-err" id="su-err1"></div>
-      </div>
-      <div id="su-s2" style="display:none">
-        <div class="auth-title">Connect your Worker</div>
-        <div class="auth-sub">Enter your Cloudflare Worker URL. Saved permanently to Supabase.</div>
-        <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" type="text" id="su-worker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
-        <button class="auth-btn" id="su-btn2" onclick="suStep2()">Verify & Save →</button>
-        <button class="auth-btn ghost" onclick="suSkip()">Skip for now →</button>
-        <div class="auth-err" id="su-err2"></div>
-      </div>
-      <div id="su-s3" style="display:none;text-align:center">
-        <div style="font-size:48px;margin-bottom:14px">🎉</div>
-        <div class="auth-title" style="text-align:center">You're all set!</div>
-        <div class="auth-sub" style="text-align:center;margin-bottom:22px">Account created in Supabase. Log in from any device — your data follows you.</div>
-        <button class="auth-btn" onclick="goApp()">Open Dashboard →</button>
-      </div>
-      <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
-    </div>
-  </div>
-</div>
-
-<!-- LOGIN -->
-<div id="loginPage" style="display:none">
-  <div class="auth-scene"><div class="auth-mesh"></div><div class="auth-lines"></div></div>
-  <div class="auth-wrap">
-    <div class="auth-logo">
-      <div class="auth-logo-mark">⚡</div>
-      <div><div class="auth-logo-name">Flow<em>Pulse</em></div><div class="auth-logo-tag">n8n Automation Intelligence</div></div>
-    </div>
-    <div class="auth-card">
-      <div class="auth-title">Welcome back</div>
-      <div class="auth-sub">Sign in — your Worker URL loads automatically from Supabase.</div>
-      <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="li-email" placeholder="you@company.com"/></div>
-      <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="li-pass" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/><span class="fi-eye" onclick="togglePw('li-pass',this)">👁</span></div></div>
-      <button class="auth-btn" id="li-btn" onclick="doLogin()">Sign In →</button>
-      <div class="auth-err" id="li-err"></div>
-      <div class="auth-switch">No account? <a onclick="showSignup()">Sign up free</a></div>
+      <div class="auth-title">Create Agency Account</div>
+      <div class="auth-sub">Set up your dashboard to manage all client workflows.</div>
+      <div class="mrow"><div class="fg" style="margin-bottom:0"><div class="fl">Your Name</div><input class="fi" type="text" id="su-name" placeholder="Hamza"/></div><div class="fg" style="margin-bottom:0"><div class="fl">Agency</div><input class="fi" type="text" id="su-agency" placeholder="HKB Automations"/></div></div>
+      <div style="height:12px"></div>
+      <div class="fg"><div class="fl">Email</div><input class="fi" type="email" id="su-email" placeholder="you@hkbautomations.com"/></div>
+      <div class="fg"><div class="fl">Password</div><div class="fi-wrap"><input class="fi" type="password" id="su-pass" placeholder="Min 8 characters"/><span class="fi-eye" onclick="togglePw('su-pass',this)">👁</span></div></div>
+      <button class="auth-btn" id="su-btn" onclick="doSignup()">Create Account →</button>
+      <div class="auth-err" id="su-err"></div>
+      <div class="auth-switch">Have an account? <a onclick="showLogin()">Sign in</a></div>
     </div>
   </div>
 </div>
 
 <!-- MOBILE TOPBAR -->
 <div class="mob-topbar" id="mobTopbar">
-  <div class="mob-logo"><div class="mob-logo-mark">⚡</div><div class="mob-logo-name">Flow<em>Pulse</em></div></div>
-  <div class="mob-r"><div class="mob-live"><div class="s-live-dot"></div>Live</div><div class="mob-sync" onclick="fetchData(true)">↻</div></div>
+  <div style="display:flex;align-items:center;gap:8px"><div style="width:25px;height:25px;border-radius:6px;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:11px">⚡</div><div class="mob-logo-name">HKB Agency</div></div>
+  <div style="display:flex;gap:6px;align-items:center"><div class="tb-badge" style="font-size:9px"><div class="tb-badge-dot"></div>Live</div><button class="btn" style="padding:5px 8px;font-size:11px" onclick="refreshAll()">↻</button></div>
 </div>
 
-<!-- PWA INSTALL BANNER -->
+<!-- PWA BANNER -->
 <div class="pwa-banner" id="pwaBanner">
   <div class="pwa-mark">⚡</div>
-  <div style="flex:1"><div style="font-size:13px;font-weight:700">Install FlowPulse</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">Add to home screen for quick access</div></div>
-  <div style="display:flex;flex-direction:column;gap:5px">
-    <button onclick="installPWA()" style="padding:6px 13px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--vi),#5b21b6);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif">Install</button>
-    <button onclick="dismissPWA()" style="padding:5px 13px;border-radius:7px;border:1px solid var(--b1);background:transparent;color:var(--tx3);font-size:11px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif">Later</button>
+  <div style="flex:1"><div style="font-size:13px;font-weight:700">Install HKB Dashboard</div><div style="font-size:10.5px;color:var(--tx3);margin-top:2px">Add to home screen</div></div>
+  <div style="display:flex;flex-direction:column;gap:4px">
+    <button onclick="installPWA()" style="padding:6px 12px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--vi),#5b21b6);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif">Install</button>
+    <button onclick="dismissPWA()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--b1);background:transparent;color:var(--tx3);font-size:11px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif">Later</button>
   </div>
 </div>
 
 <!-- APP -->
 <div id="appPage">
   <div class="progress" id="progress"></div>
-
   <aside class="sidebar">
     <div class="s-logo">
       <div class="s-logo-mark">⚡</div>
-      <div class="s-logo-name" style="flex:1">Flow<em>Pulse</em></div>
-      <div class="s-live"><div class="s-live-dot"></div>LIVE</div>
+      <div class="s-logo-texts"><div class="s-logo-name">HKB Automations</div><div class="s-logo-tag">Agency Dashboard</div></div>
+      <div class="s-live"><div class="s-live-dot"></div></div>
     </div>
     <nav class="s-nav">
-      <div class="s-sec">Overview</div>
-      <div class="ni active" onclick="navTo('dashboard',this)"><span class="ni-ic">⬡</span>Dashboard</div>
-      <div class="ni" onclick="navTo('workflows',this)"><span class="ni-ic">⟳</span>Workflows</div>
-      <div class="ni" onclick="navTo('executions',this)"><span class="ni-ic">≡</span>Executions</div>
-      <div class="s-sec">Monitor</div>
-      <div class="ni" onclick="navTo('health',this)"><span class="ni-ic">◎</span>Health Scores</div>
-      <div class="ni" onclick="navTo('alerts',this)"><span class="ni-ic">⚠</span>Alerts<span class="ni-badge" id="aBadge">0</span></div>
-      <div class="ni" onclick="navTo('analytics',this)"><span class="ni-ic">↗</span>Analytics</div>
-      <div class="s-sec">Config</div>
-      <div class="ni" onclick="navTo('statuspage',this)"><span class="ni-ic">🌐</span>Client Status Page</div>
-      <div class="ni" onclick="navTo('settings',this)"><span class="ni-ic">◈</span>Account Settings</div>
+      <div class="s-sec">Agency</div>
+      <div class="ni active" onclick="navTo('overview',this)"><span class="ni-ic">⬡</span>Overview<span class="ni-count" id="clientCountBadge"></span></div>
+      <div class="ni" onclick="navTo('clients',this)"><span class="ni-ic">👥</span>All Clients</div>
+      <div class="ni" onclick="navTo('alerts',this)"><span class="ni-ic">⚠</span>All Alerts<span class="ni-badge" id="aBadge" style="display:none">0</span></div>
+      <div class="s-sec"><span>Clients</span><span class="s-sec-add" onclick="openAddClient()">+ Add</span></div>
+      <div id="clientsNavList"><div style="padding:6px 9px;font-size:10.5px;color:var(--tx3)">No clients yet</div></div>
+      <div class="s-sec">Account</div>
+      <div class="ni" onclick="navTo('settings',this)"><span class="ni-ic">◈</span>Settings</div>
     </nav>
     <div class="s-bot">
       <button class="s-install" id="sidebarInstallBtn" onclick="installPWA()">📲 Install App</button>
       <div class="s-user">
-        <div class="s-ava" id="sAva">?</div>
-        <div class="s-uinfo"><div class="s-uname" id="sName">—</div><div class="s-uemail" id="sEmail">—</div></div>
-        <div class="s-signout" title="Sign out" onclick="logout()">⏻</div>
+        <div class="s-ava" id="sAva">H</div>
+        <div class="s-uinfo"><div class="s-uname" id="sName">HKB</div><div class="s-uemail" id="sEmail">—</div></div>
+        <div class="s-signout" onclick="logout()">⏻</div>
       </div>
     </div>
   </aside>
 
   <main class="main">
     <div class="topbar">
-      <div class="tb-title" id="pageTitle">Dashboard<span class="tb-sub">/ Live Overview</span></div>
+      <div class="tb-title" id="pageTitle">Overview<span class="tb-sub">/ All Clients</span></div>
       <div class="tb-r">
-        <div class="search-box"><span style="color:var(--tx3);font-size:12px">⌕</span><input type="text" placeholder="Search workflows…" id="srch" oninput="handleSearch()"/></div>
         <div class="tb-badge"><div class="tb-badge-dot"></div>Live</div>
-        <button class="btn btn-vi" onclick="fetchData(true)">↻ Refresh</button>
-        <button class="btn" onclick="navTo('settings',null)">⚙</button>
+        <button class="btn btn-vi" onclick="refreshAll()">↻ Refresh All</button>
+        <button class="btn btn-mi" onclick="openAddClient()">+ Add Client</button>
       </div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="page active" id="page-dashboard">
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
       <div id="talert" class="talert"><span>⚠️</span><div id="talertTxt" style="flex:1"></div><span class="talert-x" onclick="this.parentElement.style.display='none'">×</span></div>
       <div class="stats">
-        <div class="stat"><div class="stat-top"><div class="stat-lbl">Unique Workflows</div><div class="stat-ic ic-vi">⟳</div></div><div class="stat-val" id="sWf">—</div><div class="stat-note cnm" id="sWfN">Waiting</div><div class="spark" id="spWf"></div></div>
-        <div class="stat"><div class="stat-top"><div class="stat-lbl">Total Executions</div><div class="stat-ic ic-mi">▶</div></div><div class="stat-val" id="sEx">—</div><div class="stat-note cnm" id="sExN">Waiting</div><div class="spark" id="spEx"></div></div>
-        <div class="stat"><div class="stat-top"><div class="stat-lbl">Success Rate</div><div class="stat-ic ic-mi">✓</div></div><div class="stat-val" id="sSr">—</div><div class="stat-note cnm" id="sSrN">Waiting</div><div class="spark" id="spSr"></div></div>
-        <div class="stat"><div class="stat-top"><div class="stat-lbl">Active Errors</div><div class="stat-ic ic-re">⚠</div></div><div class="stat-val" id="sEr" style="color:var(--re)">—</div><div class="stat-note cnm" id="sErN">Waiting</div><div class="spark" id="spEr"></div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-lbl">Total Clients</div><div class="stat-ic ic-vi">👥</div></div><div class="stat-val" id="st-clients">—</div><div class="stat-note cnm" id="st-clientsN">No clients</div><div class="spark" id="spC"></div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-lbl">Total Executions</div><div class="stat-ic ic-mi">▶</div></div><div class="stat-val" id="st-execs">—</div><div class="stat-note cnm" id="st-execsN">All clients</div><div class="spark" id="spE"></div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-lbl">Success Rate</div><div class="stat-ic ic-mi">✓</div></div><div class="stat-val" id="st-rate">—</div><div class="stat-note cnm" id="st-rateN">All workflows</div><div class="spark" id="spR"></div></div>
+        <div class="stat"><div class="stat-top"><div class="stat-lbl">Active Errors</div><div class="stat-ic ic-re">⚠</div></div><div class="stat-val" id="st-errs" style="color:var(--re)">—</div><div class="stat-note cnm" id="st-errsN">Needs attention</div><div class="spark" id="spEr"></div></div>
       </div>
       <div class="g2">
-        <div class="card card-last">
-          <div class="ch"><div class="ct">Workflow Executions</div><div class="cm"><span id="lastUp">—</span>&nbsp;<span id="wfCnt" style="color:var(--vi);font-weight:700"></span></div></div>
-          <div class="tabs"><div class="tab active" onclick="setTab(this,'all')">All</div><div class="tab" onclick="setTab(this,'success')">Success</div><div class="tab" onclick="setTab(this,'error')">Errors</div></div>
-          <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Health</th><th>Duration</th><th>Items</th><th>Last Run</th></tr></thead><tbody id="wfBody"></tbody></table></div>
+        <div class="card" style="margin-bottom:0">
+          <div class="ch"><div class="ct">Client Leaderboard</div><div class="cm">ranked by health score</div></div>
+          <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Client</th><th>Workflows</th><th>Executions</th><th>Health</th><th>Errors</th><th>Last Activity</th><th></th></tr></thead><tbody id="overviewBody"><tr><td colspan="7"><div class="empty"><div class="empty-i">👥</div>Add your first client to get started</div></td></tr></tbody></table></div>
+        </div>
+        <div class="rcol">
+          <div class="card"><div class="ch"><div class="ct">Live Activity</div><div class="tb-badge" style="font-size:8.5px"><div class="tb-badge-dot"></div>All clients</div></div><div class="log-list" id="globalLog"><div class="empty"><div class="empty-i">📋</div>Waiting for data…</div></div></div>
+          <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Needs Attention</div><div class="cm">lowest health</div></div><div class="hl" id="worstHealth"><div class="empty"><div class="empty-i">✅</div>All clients healthy</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALL CLIENTS -->
+    <div class="page" id="page-clients">
+      <div class="clients-grid" id="clientsGrid">
+        <div class="add-client-card" onclick="openAddClient()"><div class="add-client-icon">+</div><div style="font-size:12px;font-weight:600;color:var(--tx2)">Add New Client</div><div style="font-size:10.5px;color:var(--tx3)">Separate Worker per client</div></div>
+      </div>
+    </div>
+
+    <!-- CLIENT DETAIL -->
+    <div class="page" id="page-client-detail">
+      <div class="cd-header" id="cdHeader"></div>
+      <div class="stats" id="cdStats" style="margin-top:0"></div>
+      <div class="g2">
+        <div class="card" style="margin-bottom:0">
+          <div class="ch">
+            <div class="ct">Executions</div>
+            <div class="exec-filters"><button class="filter-btn active" onclick="setCDFilter(this,'all')">All</button><button class="filter-btn" onclick="setCDFilter(this,'success')">✅</button><button class="filter-btn" onclick="setCDFilter(this,'error')">❌</button></div>
+          </div>
+          <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Items</th><th>Error</th><th>Time</th></tr></thead><tbody id="cdExecBody"></tbody></table></div>
         </div>
         <div class="rcol">
           <div class="card">
-            <div class="ch"><div class="ct">Worker Connection</div><div class="conn-status idle" id="cstat"><div class="conn-dot idle" id="cdot"></div><span id="ctxt">Idle</span></div></div>
-            <div class="connp">
-              <div class="conn-url" id="curl">No worker configured</div>
-              <div class="wh-lbl">Webhook URL</div>
-              <div class="wh-url" id="whUrlBox" onclick="copyWebhook()">Configure worker URL first →</div>
-              <div style="font-size:10px;color:var(--tx3);margin-bottom:10px">↑ Paste in your n8n HTTP Request node</div>
-              <div style="display:flex;gap:7px">
-                <button class="btn" style="flex:1;justify-content:center" onclick="navTo('settings',null)">⚙ Settings</button>
-                <button class="btn btn-vi" style="flex:1;justify-content:center" onclick="fetchData(true)">↻ Sync</button>
+            <div class="ch"><div class="ct">Connection</div><div class="conn-status idle" id="cdConnStat"><div class="conn-dot idle"></div><span id="cdConnTxt">—</span></div></div>
+            <div style="padding:12px 14px">
+              <div class="conn-lbl">Worker URL</div>
+              <div class="wh-url" id="cdWorkerUrl" onclick="copyText(this.textContent,'Worker URL')">—</div>
+              <div class="conn-lbl">Webhook (give to client for n8n)</div>
+              <div class="wh-url" id="cdWebhookUrl" onclick="copyText(this.textContent,'Webhook URL')">—</div>
+              <div class="conn-lbl">Client Status Page URL</div>
+              <div class="sp-link-box" id="cdStatusUrl" onclick="copyText(this.textContent,'Status Page URL')">—</div>
+              <div style="font-size:10px;color:var(--tx3);margin-top:4px;margin-bottom:12px">↑ Share this URL with your client</div>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-vi" style="flex:1;justify-content:center" onclick="refreshCurrentClient()">↻ Refresh</button>
+                <button class="btn" style="flex:1;justify-content:center" onclick="openEditCurrentClient()">✏️ Edit</button>
               </div>
             </div>
           </div>
-          <div class="card"><div class="ch"><div class="ct">Execution Log</div><div class="tb-badge" style="font-size:9px"><div class="tb-badge-dot"></div>Streaming</div></div><div class="log-list" id="logList"><div class="empty"><div class="empty-i">📋</div>Waiting…</div></div></div>
-          <div class="card card-last"><div class="ch"><div class="ct">Workflow Health</div><div class="cm">by success rate</div></div><div class="hl" id="healthList"><div class="empty"><div class="empty-i">❤️</div>No data</div></div></div>
+          <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Workflow Health</div></div><div class="hl" id="cdHealthList"><div class="empty"><div class="empty-i">❤️</div>No data</div></div></div>
         </div>
       </div>
-      <div class="b2">
-        <div class="card card-last"><div class="ch"><div class="ct">Activity</div><div class="cm">Last 7 days</div></div><div class="act" id="actChart"><div class="empty" style="width:100%;padding:16px">No activity</div></div></div>
-        <div class="card card-last"><div class="ch"><div class="ct">Error Alerts</div><span class="cm" style="color:var(--re)" id="errCnt"></span></div><div class="el" id="errList"><div class="empty"><div class="empty-i">✅</div>No errors</div></div></div>
-      </div>
     </div>
 
-    <!-- WORKFLOWS -->
-    <div class="page" id="page-workflows">
-      <div class="ch" style="background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);margin-bottom:14px;padding:14px 18px"><div class="ct">All Workflows</div><div class="cm"><span id="wfPageCount" style="color:var(--vi);font-weight:700"></span></div></div>
-      <div class="wf-grid" id="wfGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div></div>
-    </div>
-
-    <!-- EXECUTIONS -->
-    <div class="page" id="page-executions">
-      <div class="exec-filters"><button class="filter-btn active" onclick="setExecFilter(this,'all')">All</button><button class="filter-btn" onclick="setExecFilter(this,'success')">✅ Success</button><button class="filter-btn" onclick="setExecFilter(this,'error')">❌ Failed</button></div>
-      <div class="card card-last"><div class="ch"><div class="ct">Execution History</div><div class="cm" id="execTotal"></div></div><div style="overflow-x:auto"><table class="tbl"><thead><tr><th>Workflow</th><th>Status</th><th>Duration</th><th>Items</th><th>Error</th><th>Time</th></tr></thead><tbody id="execBody"></tbody></table></div></div>
-    </div>
-
-    <!-- HEALTH -->
-    <div class="page" id="page-health">
-      <div class="health-grid" id="healthGrid"><div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data yet</div></div>
-    </div>
-
-    <!-- ALERTS -->
+    <!-- ALL ALERTS -->
     <div class="page" id="page-alerts">
-      <div class="card card-last"><div class="ch"><div class="ct">Active Alerts</div><div class="cm" id="alertsCount"></div></div><div id="alertsList"><div class="empty"><div class="empty-i">✅</div>No alerts</div></div></div>
-    </div>
-
-    <!-- ANALYTICS -->
-    <div class="page" id="page-analytics">
-      <div class="analytics-grid">
-        <div class="card card-last"><div class="ch"><div class="ct">Executions Over Time</div><div class="cm">Last 7 days</div></div><div class="big-chart" id="bigChart"></div></div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div class="analytics-stat"><div class="analytics-stat-val" id="an-total">—</div><div class="analytics-stat-lbl">Total Executions</div></div>
-          <div class="analytics-stat"><div class="analytics-stat-val" id="an-rate" style="color:var(--mi)">—</div><div class="analytics-stat-lbl">Success Rate</div></div>
-          <div class="analytics-stat"><div class="analytics-stat-val" id="an-avg" style="color:var(--vi)">—</div><div class="analytics-stat-lbl">Avg Duration</div></div>
-        </div>
-      </div>
-      <div class="b2">
-        <div class="card card-last"><div class="ch"><div class="ct">Most Active</div></div><div class="top-list" id="topActive"></div></div>
-        <div class="card card-last"><div class="ch"><div class="ct">Most Reliable</div></div><div class="top-list" id="topReliable"></div></div>
-      </div>
-    </div>
-
-    <!-- STATUS PAGE -->
-    <div class="page" id="page-statuspage">
-      <div class="card" style="margin-bottom:14px">
-        <div class="ch"><div class="ct">🌐 Client Status Page</div><div class="cm">Share live status with clients</div></div>
-        <div style="padding:20px">
-          <div style="font-size:13px;color:var(--tx2);line-height:1.7;margin-bottom:18px">Create a public status page and share it with clients. They see real-time health of only the workflows you choose — no login required.</div>
-          <div style="display:flex;gap:9px;flex-wrap:wrap">
-            <button class="btn btn-vi" onclick="openShareModal()">⚡ Create / Edit Status Page</button>
-            <button class="btn" id="viewStatusBtn" style="display:none" onclick="viewStatusPage()">🔗 View My Status Page</button>
-          </div>
-        </div>
-      </div>
-      <div class="card card-last" id="statusPagePreview" style="display:none">
-        <div class="ch"><div class="ct">Your Status Page</div><div class="cm" id="spLinkLabel"></div></div>
-        <div style="padding:16px">
-          <div style="font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Shareable URL</div>
-          <div class="sp-link-box" id="spLinkBox" onclick="copyStatusLink()">—</div>
-          <div style="font-size:10.5px;color:var(--tx3);margin-top:6px">↑ Click to copy · Share this with your clients</div>
-          <div style="margin-top:14px">
-            <div style="font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">Public Workflows</div>
-            <div id="spPublicList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-          </div>
-        </div>
-      </div>
+      <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">All Active Errors</div><div class="cm" id="alertsCount">Across all clients</div></div><div id="alertsList"><div class="empty"><div class="empty-i">✅</div>All clients are healthy!</div></div></div>
     </div>
 
     <!-- SETTINGS -->
     <div class="page" id="page-settings">
       <div class="settings-sec">
-        <div class="settings-sec-title">Account — Stored in Supabase ☁️</div>
+        <div class="settings-sec-title">Agency Account</div>
         <div class="settings-card">
           <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Name</div></div><div class="settings-val" id="set-name">—</div></div>
           <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Email</div></div><div class="settings-val" id="set-email">—</div></div>
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">User ID</div><div class="settings-row-desc">Supabase Auth UUID</div></div><div class="settings-val" id="set-uid" style="font-size:10px">—</div></div>
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Sign Out</div><div class="settings-row-desc">Clears session from this device</div></div><button class="btn" style="color:var(--re);border-color:rgba(239,68,68,.2)" onclick="logout()">Sign Out</button></div>
+          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Clients Managed</div></div><div class="settings-val" id="set-clients">0</div></div>
+          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Sign Out</div><div class="settings-row-desc">Clears session from this device</div></div><button class="btn btn-re" onclick="logout()">Sign Out</button></div>
         </div>
       </div>
       <div class="settings-sec">
-        <div class="settings-sec-title">n8n Connection — Saved in Supabase ☁️</div>
+        <div class="settings-sec-title">How to Add a New Client</div>
         <div class="settings-card">
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Worker URL</div><div class="settings-row-desc">Cloudflare proxy — saved to your profile</div></div><div style="display:flex;gap:8px;align-items:center"><div class="settings-val" id="set-worker">Not set</div><button class="btn" onclick="showModal()">Edit</button></div></div>
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Webhook URL</div><div class="settings-row-desc">Paste in your n8n HTTP Request node</div></div><button class="btn" onclick="copyWebhook()">📋 Copy</button></div>
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Status</div></div><div class="conn-status idle" id="settingsConnStat"><div class="conn-dot idle" id="settingsConnDot"></div><span id="settingsConnTxt">Idle</span></div></div>
-        </div>
-      </div>
-      <div class="settings-sec">
-        <div class="settings-sec-title">Data</div>
-        <div class="settings-card">
-          <div class="settings-row"><div class="settings-row-l"><div class="settings-row-name">Clear Execution Data</div><div class="settings-row-desc">Deletes all records from Cloudflare KV</div></div><button class="btn" style="color:var(--re);border-color:rgba(239,68,68,.2)" onclick="clearData()">Clear</button></div>
+          <div style="padding:16px 17px;font-size:12px;color:var(--tx2);line-height:1.9">
+            <b style="color:var(--tx)">Step 1</b> — Go to <b>workers.cloudflare.com</b>, create new Worker, paste <code style="color:var(--ic);font-family:'IBM Plex Mono',monospace">worker.js</code><br>
+            <b style="color:var(--tx)">Step 2</b> — Update <code style="color:var(--ic);font-family:'IBM Plex Mono',monospace">ALLOWED_ORIGINS</code> with your domain<br>
+            <b style="color:var(--tx)">Step 3</b> — Add KV binding named <code style="color:var(--ic);font-family:'IBM Plex Mono',monospace">FLOWPULSE_KV</code>, deploy<br>
+            <b style="color:var(--tx)">Step 4</b> — Click <b>"+ Add Client"</b> and paste the Worker URL<br>
+            <b style="color:var(--tx)">Step 5</b> — Copy the Webhook URL → give to client for their n8n<br>
+            <b style="color:var(--tx)">Step 6</b> — Share their status page URL so they can monitor their flows
+          </div>
         </div>
       </div>
     </div>
-
   </main>
 
-  <!-- MOBILE BOTTOM NAV -->
+  <!-- MOBILE NAV -->
   <nav class="mob-nav">
     <div class="mob-nav-inner">
-      <div class="mn-item active" id="mn-dashboard" onclick="navTo('dashboard',null);setMobNav('dashboard')"><div class="mn-icon">⬡</div><div class="mn-lbl">Home</div></div>
-      <div class="mn-item" id="mn-workflows" onclick="navTo('workflows',null);setMobNav('workflows')"><div class="mn-icon">⟳</div><div class="mn-lbl">Flows</div></div>
+      <div class="mn-item active" id="mn-overview" onclick="navTo('overview',null);setMobNav('overview')"><div class="mn-icon">⬡</div><div class="mn-lbl">Overview</div></div>
+      <div class="mn-item" id="mn-clients" onclick="navTo('clients',null);setMobNav('clients')"><div class="mn-icon">👥</div><div class="mn-lbl">Clients</div></div>
       <div class="mn-item" id="mn-alerts" onclick="navTo('alerts',null);setMobNav('alerts')"><div class="mn-icon">⚠</div><div class="mn-lbl">Alerts</div><div class="mn-badge" id="mnBadge" style="display:none">0</div></div>
-      <div class="mn-item" id="mn-analytics" onclick="navTo('analytics',null);setMobNav('analytics')"><div class="mn-icon">↗</div><div class="mn-lbl">Analytics</div></div>
       <div class="mn-item" id="mn-settings" onclick="navTo('settings',null);setMobNav('settings')"><div class="mn-icon">◈</div><div class="mn-lbl">Settings</div></div>
     </div>
   </nav>
 </div>
 
-<!-- WORKER MODAL -->
-<div class="mbg" id="modal" onclick="closeModalOut(event)">
-  <div class="modal">
-    <div class="mh">⚡ Update Worker URL</div>
-    <div class="ms">Saved permanently to your Supabase profile. Works on any device.</div>
-    <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" type="text" id="mWorker" placeholder="https://flowpulse.yourname.workers.dev"/></div>
-    <div class="mac"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-vi" id="mSaveBtn" onclick="saveWorkerUrl()">Save to Supabase →</button></div>
+<!-- ADD/EDIT CLIENT MODAL -->
+<div class="mbg" id="clientModal" onclick="if(event.target===this)closeClientModal()">
+  <div class="modal" style="width:500px">
+    <div class="mh" id="cmTitle">➕ Add New Client</div>
+    <div class="ms" id="cmSub">Each client gets their own Cloudflare Worker — complete data isolation.</div>
+    <div class="mrow">
+      <div class="fg"><div class="fl">Client Name</div><input class="fi" id="cm-name" placeholder="e.g. ACME Corp" oninput="autoSlug()"/></div>
+      <div class="fg"><div class="fl">URL Slug</div><input class="fi" id="cm-slug" placeholder="acme-corp" oninput="cleanSlug()"/></div>
+    </div>
+    <div style="font-size:10px;color:var(--tx3);margin-bottom:12px;font-family:'IBM Plex Mono',monospace" id="slugPreview">Status page: status.html?id=acme-corp</div>
+    <div class="fg"><div class="fl">Cloudflare Worker URL</div><input class="fi" id="cm-worker" placeholder="https://hkb-acme.yourname.workers.dev"/></div>
+    <div class="mrow">
+      <div class="fg"><div class="fl">Status Page Title</div><input class="fi" id="cm-title" placeholder="ACME — Automation Status"/></div>
+      <div class="fg"><div class="fl">Accent Color</div><input class="fi" type="color" id="cm-color" value="#7c3aed" style="height:40px;padding:4px"/></div>
+    </div>
+    <div class="fg"><div class="fl">Notes (internal only)</div><input class="fi" id="cm-notes" placeholder="e.g. Retainer, 5 workflows, contact: john@acme.com"/></div>
+    <div class="mac">
+      <button class="btn" onclick="closeClientModal()">Cancel</button>
+      <button class="btn btn-vi" id="cmSaveBtn" onclick="saveClient()">Save Client →</button>
+    </div>
   </div>
 </div>
 
-<!-- SHARE MODAL -->
-<div class="mbg" id="shareModal" onclick="closeShareOut(event)">
-  <div class="modal" style="width:520px">
-    <div class="mh">🌐 Create Client Status Page</div>
-    <div class="ms">Choose which workflows to make public. Clients see live health without logging in.</div>
-    <div class="fg"><div class="fl">Page Title</div><input class="fi" type="text" id="sp-title" placeholder="e.g. ACME Corp — Automation Status"/></div>
-    <div class="fg"><div class="fl">Description</div><input class="fi" type="text" id="sp-desc" placeholder="Real-time status of your automations"/></div>
-    <div style="margin-bottom:16px">
-      <div class="fl" style="margin-bottom:7px">Select Workflows to Show</div>
-      <div class="share-wf-list" id="sp-wf-list"><div style="color:var(--tx3);font-size:12px;padding:8px">No workflows yet — run some executions first</div></div>
+<!-- STATUS PAGE WORKFLOWS MODAL -->
+<div class="mbg" id="spModal" onclick="if(event.target===this)closeSPModal()">
+  <div class="modal">
+    <div class="mh">🌐 Client Status Page</div>
+    <div class="ms" id="spModalSub">Choose which workflows appear on this client's public status page.</div>
+    <div class="fg"><div class="fl">Page Description</div><input class="fi" id="sp-desc" placeholder="Real-time status of your automations"/></div>
+    <div style="font-size:9.5px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px">Visible Workflows</div>
+    <div style="background:var(--s2);border:1px solid var(--b1);border-radius:8px;padding:8px;max-height:180px;overflow-y:auto" id="spWfList"><div style="color:var(--tx3);font-size:12px;padding:6px">Run some workflows first to see them here</div></div>
+    <div class="mac">
+      <button class="btn" onclick="closeSPModal()">Cancel</button>
+      <button class="btn btn-vi" id="spSaveBtn" onclick="saveSPWorkflows()">Save →</button>
     </div>
-    <div class="mac"><button class="btn" onclick="closeShareModal()">Cancel</button><button class="btn btn-vi" id="spSaveBtn" onclick="saveStatusPage()">Save & Generate Link →</button></div>
   </div>
 </div>
 
 <div class="tw" id="tw"></div>
 
 <script>
-// ═══════════════════════════════════════════════════════
-// SUPABASE INIT
-// ═══════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://haszbfvjlxkwrrqfgqum.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhhc3piZnZqbHhrd3JycWZncXVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI5OTgxMzEsImV4cCI6MjA4ODU3NDEzMX0.-60WLt-U37aext9eKlOhnYbH0fuHmexIdLMzMvyZMjs';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
 const S = {
-  user:null,profile:null,executions:[],
-  tab:'all',execFilter:'all',searchQ:'',
-  timer:null,currentPage:'dashboard',
-  suTemp:{},statusPage:null,
+  user:null, profile:null,
+  clients:[],
+  clientData:{}, // { slug: { executions, lastFetch, status } }
+  activeClient:null,
+  cdFilter:'all',
+  timer:null, currentPage:'overview',
+  editingClientId:null,
+  spTargetSlug:null,
 };
 
 async function init(){
@@ -718,96 +569,389 @@ async function init(){
 async function loadProfile(){const{data}=await sb.from('profiles').select('*').eq('id',S.user.id).single();S.profile=data||{};}
 
 function showLogin(){hide('signupPage');hide('appPage');show('loginPage');}
-function showSignup(){hide('loginPage');hide('appPage');show('signupPage');resetSignup();}
-function goApp(){hide('signupPage');hide('loginPage');showApp();}
-
-function resetSignup(){show('su-s1');hide('su-s2');hide('su-s3');setStep(1);['su-name','su-email','su-pass','su-pass2'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});errHide('su-err1');}
-function setStep(n){[1,2,3].forEach(i=>{const d=document.getElementById('sd'+i);if(i<n){d.textContent='✓';d.className='step-dot dn';}else if(i===n){d.textContent=i;d.className='step-dot on';}else{d.textContent=i;d.className='step-dot';}});}
-function checkStrength(v){const h=document.getElementById('passHint');if(!v){h.textContent='Enter a password';h.className='fi-hint';return;}if(v.length<8){h.textContent='Too short — need 8+';h.className='fi-hint er';return;}if(!/[A-Z]/.test(v)||!/[0-9]/.test(v)){h.textContent='Medium — add capitals & numbers';h.className='fi-hint';return;}h.textContent='✓ Strong password';h.className='fi-hint ok';}
-
-async function suStep1(){
-  const name=document.getElementById('su-name').value.trim();
-  const email=document.getElementById('su-email').value.trim();
-  const pass=document.getElementById('su-pass').value;
-  const pass2=document.getElementById('su-pass2').value;
-  errHide('su-err1');
-  if(!name)return errShow('su-err1','Enter your name.');
-  if(!email||!email.includes('@'))return errShow('su-err1','Enter a valid email.');
-  if(pass.length<8)return errShow('su-err1','Password must be 8+ characters.');
-  if(pass!==pass2)return errShow('su-err1','Passwords do not match.');
-  const btn=document.getElementById('su-btn1');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating account…';
-  const{data,error}=await sb.auth.signUp({email,password:pass});
-  btn.disabled=false;btn.innerHTML='Continue →';
-  if(error)return errShow('su-err1',error.message);
-  S.user=data.user;S.suTemp={name};
-  await sb.from('profiles').upsert({id:S.user.id,name,worker_url:''});
-  await loadProfile();
-  hide('su-s1');show('su-s2');setStep(2);
-}
-async function suStep2(){
-  const worker=document.getElementById('su-worker').value.trim().replace(/\/$/,'');
-  if(!worker)return errShow('su-err2','Enter your Cloudflare Worker URL.');
-  if(!worker.startsWith('http'))return errShow('su-err2','URL must start with https://');
-  const btn=document.getElementById('su-btn2');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Verifying…';
-  try{const res=await fetch(worker+'/ping');const data=await res.json();if(!data.ok)throw new Error('bad');}
-  catch(e){btn.disabled=false;btn.innerHTML='Verify & Save →';return errShow('su-err2','Cannot reach Worker. Check URL.');}
-  const{error}=await sb.from('profiles').upsert({id:S.user.id,name:S.suTemp.name,worker_url:worker});
-  btn.disabled=false;btn.innerHTML='Verify & Save →';
-  if(error)return errShow('su-err2','Saved locally but Supabase error: '+error.message);
-  await loadProfile();
-  hide('su-s2');show('su-s3');setStep(3);
-}
-async function suSkip(){hide('su-s2');show('su-s3');setStep(3);}
+function showSignup(){hide('loginPage');hide('appPage');show('signupPage');}
 
 async function doLogin(){
   const email=document.getElementById('li-email').value.trim();
   const pass=document.getElementById('li-pass').value;
-  const btn=document.getElementById('li-btn');
   errHide('li-err');
   if(!email||!email.includes('@'))return errShow('li-err','Enter a valid email.');
   if(!pass)return errShow('li-err','Enter your password.');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
+  const btn=document.getElementById('li-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';
   const{data,error}=await sb.auth.signInWithPassword({email,password:pass});
   btn.disabled=false;btn.innerHTML='Sign In →';
-  if(error)return errShow('li-err',error.message==='Invalid login credentials'?'Incorrect email or password.':error.message);
+  if(error)return errShow('li-err',error.message==='Invalid login credentials'?'Wrong email or password.':error.message);
   S.user=data.user;await loadProfile();showApp();
 }
 
-function showApp(){
-  hide('loginPage');hide('signupPage');show('appPage');
-  const name=S.profile?.name||S.user?.email?.split('@')[0]||'User';
-  const email=S.user?.email||'—';
-  const w=S.profile?.worker_url||'';
-  document.getElementById('sAva').textContent=name.slice(0,2).toUpperCase();
-  document.getElementById('sName').textContent=name;
-  document.getElementById('sEmail').textContent=email;
-  document.getElementById('set-name').textContent=name;
-  document.getElementById('set-email').textContent=email;
-  document.getElementById('set-uid').textContent=(S.user?.id||'').slice(0,18)+'…';
-  document.getElementById('set-worker').textContent=w||'Not set';
-  document.getElementById('mWorker').value=w;
-  updateConnUI();
-  if(w){fetchData(true);startTimer();loadStatusPage();}
-  else toast('Welcome! Add your Worker URL in Settings to start. ⚡','in');
+async function doSignup(){
+  const name=document.getElementById('su-name').value.trim();
+  const email=document.getElementById('su-email').value.trim();
+  const pass=document.getElementById('su-pass').value;
+  errHide('su-err');
+  if(!name)return errShow('su-err','Enter your name.');
+  if(!email||!email.includes('@'))return errShow('su-err','Enter a valid email.');
+  if(pass.length<8)return errShow('su-err','Password must be 8+ characters.');
+  const btn=document.getElementById('su-btn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  const{data,error}=await sb.auth.signUp({email,password:pass});
+  btn.disabled=false;btn.innerHTML='Create Account →';
+  if(error)return errShow('su-err',error.message);
+  S.user=data.user;
+  await sb.from('profiles').upsert({id:S.user.id,name,worker_url:''});
+  await loadProfile();showApp();
 }
 
 async function logout(){
   await sb.auth.signOut();clearInterval(S.timer);
-  S.user=null;S.profile=null;S.executions=[];
+  S.user=null;S.profile=null;S.clients=[];S.clientData={};S.activeClient=null;
   hide('appPage');showLogin();
+}
+
+function showApp(){
+  hide('loginPage');hide('signupPage');show('appPage');
+  const name=S.profile?.name||S.user?.email?.split('@')[0]||'HKB';
+  document.getElementById('sAva').textContent=name.slice(0,2).toUpperCase();
+  document.getElementById('sName').textContent=name;
+  document.getElementById('sEmail').textContent=S.user?.email||'—';
+  document.getElementById('set-name').textContent=name;
+  document.getElementById('set-email').textContent=S.user?.email||'—';
+  loadClients();
+}
+
+// ── CLIENTS CORE ──
+async function loadClients(){
+  const{data,error}=await sb.from('clients').select('*').eq('user_id',S.user.id).order('created_at');
+  if(error){toast('Failed to load clients','er');return;}
+  S.clients=data||[];
+  renderClientsNav();
+  renderClientsGrid();
+  set('clientCountBadge',S.clients.length||'');
+  set('set-clients',S.clients.length);
+  if(S.clients.length>0){refreshAll();}
+  clearInterval(S.timer);
+  S.timer=setInterval(refreshAll,15000);
+}
+
+async function refreshAll(){
+  if(!S.clients.length)return;
+  animBar();
+  await Promise.all(S.clients.map(c=>fetchClientData(c)));
+  renderClientsNav();
+  renderClientsGrid();
+  renderOverviewStats();
+  renderOverviewTable();
+  renderGlobalLog();
+  renderWorstHealth();
+  renderAllAlerts();
+  if(S.activeClient&&S.currentPage==='client-detail')renderClientDetail(S.activeClient.client_slug);
+}
+
+async function fetchClientData(c){
+  try{
+    const res=await fetch(c.worker_url+'/executions',{signal:AbortSignal.timeout(8000)});
+    const data=await res.json();
+    S.clientData[c.client_slug]={executions:data.executions||[],lastFetch:new Date(),status:'ok'};
+  }catch(e){
+    if(!S.clientData[c.client_slug])S.clientData[c.client_slug]={executions:[],lastFetch:new Date(),status:'error'};
+    else S.clientData[c.client_slug].status='error';
+  }
+}
+
+async function refreshCurrentClient(){
+  if(!S.activeClient)return;
+  await fetchClientData(S.activeClient);
+  renderClientDetail(S.activeClient.client_slug);
+  toast('Refreshed '+S.activeClient.client_name,'ok');
+}
+
+// ── RENDER NAV ──
+function renderClientsNav(){
+  if(!S.clients.length){set('clientsNavList','<div style="padding:6px 9px;font-size:10.5px;color:var(--tx3)">No clients — <span style="color:var(--vi);cursor:pointer" onclick="openAddClient()">add one</span></div>');return;}
+  set('clientsNavList',S.clients.map(c=>{
+    const d=S.clientData[c.client_slug];const exs=d?.executions||[];
+    const health=exs.length?calcHealth(exs):null;
+    const hc=health!==null?healthColor(health):'var(--tx3)';
+    const isActive=S.activeClient?.client_slug===c.client_slug&&S.currentPage==='client-detail';
+    return`<div class="client-nav-item${isActive?' active':''}" id="cnav-${c.client_slug}" onclick="openClientDetail('${c.client_slug}')"><div class="client-dot" style="background:${c.color||'var(--vi)'}${d?.status==='error'?';box-shadow:0 0 5px var(--re)':''}"></div><div class="client-name-nav">${esc(c.client_name)}</div><div class="client-health-nav" style="color:${hc}">${health!==null?health+'%':'—'}</div></div>`;
+  }).join(''));
+}
+
+// ── RENDER CLIENTS GRID ──
+function renderClientsGrid(){
+  const addCard=`<div class="add-client-card" onclick="openAddClient()"><div class="add-client-icon">+</div><div style="font-size:12px;font-weight:600;color:var(--tx2)">Add New Client</div><div style="font-size:10.5px;color:var(--tx3)">Separate Worker per client</div></div>`;
+  if(!S.clients.length){set('clientsGrid',addCard);return;}
+  set('clientsGrid',S.clients.map(c=>{
+    const d=S.clientData[c.client_slug];const exs=d?.executions||[];
+    const total=exs.length,errs=exs.filter(e=>e.status==='error').length;
+    const health=calcHealth(exs);const hc=healthColor(health);
+    const wfs=[...new Set(exs.map(e=>e.workflowName))].length;
+    const initials=c.client_name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const last=exs[0];
+    return`<div class="client-card" onclick="openClientDetail('${c.client_slug}')">
+      <div class="cc-stripe" style="background:${c.color||'var(--vi)'}"></div>
+      <div class="cc-header">
+        <div><div class="cc-name">${esc(c.client_name)}</div><div class="cc-slug">${c.client_slug}</div></div>
+        <div class="cc-avatar" style="background:${c.color||'var(--vi)'}">${initials}</div>
+      </div>
+      ${d?.status==='error'?`<div style="font-size:11px;color:var(--re);background:var(--re2);border-radius:6px;padding:6px 9px;margin-bottom:10px">⚠ Worker unreachable — check URL</div>`:''}
+      <div class="cc-stats">
+        <div class="cs-item"><div class="cs-val">${wfs||'—'}</div><div class="cs-lbl">Flows</div></div>
+        <div class="cs-item"><div class="cs-val">${total||'—'}</div><div class="cs-lbl">Runs</div></div>
+        <div class="cs-item"><div class="cs-val" style="color:${errs?'var(--re)':'var(--tx3)'}">${errs||'0'}</div><div class="cs-lbl">Errors</div></div>
+      </div>
+      <div class="cc-bar"><div class="cc-bar-fill" style="width:${health}%;background:${hc}"></div></div>
+      <div class="cc-footer">
+        <div class="cc-health" style="color:${hc}">${total?health+'% health':'No data yet'}</div>
+        <div class="cc-actions" onclick="event.stopPropagation()">
+          <button onclick="openEditClientById('${c.id}')">✏️</button>
+          <button onclick="openSPModal('${c.client_slug}')">🌐</button>
+          <button onclick="deleteClient('${c.id}','${esc(c.client_name)}')">🗑️</button>
+        </div>
+      </div>
+      ${last?`<div style="font-size:9px;color:var(--tx3);margin-top:6px;font-family:'IBM Plex Mono',monospace">Last activity: ${timeAgo(new Date(last.receivedAt))}</div>`:''}
+    </div>`;
+  }).join('')+addCard);
+}
+
+// ── OVERVIEW ──
+function renderOverviewStats(){
+  const total=S.clients.length;
+  let totalExecs=0,totalSucc=0,totalErrs=0;
+  S.clients.forEach(c=>{const d=S.clientData[c.client_slug];if(d&&d.status==='ok'){totalExecs+=d.executions.length;totalSucc+=d.executions.filter(e=>e.status==='success').length;totalErrs+=d.executions.filter(e=>e.status==='error').length;}});
+  const rate=totalExecs>0?Math.round((totalSucc/totalExecs)*1000)/10:0;
+  set('st-clients',total||'—');
+  set('st-execs',totalExecs||'—');
+  document.getElementById('st-rate').innerHTML=totalExecs?`${rate}<span style="font-size:14px;color:var(--tx3)">%</span>`:'—';
+  set('st-errs',totalErrs||'—');
+  document.getElementById('st-errs').style.color=totalErrs?'var(--re)':'var(--tx)';
+  set('st-clientsN',total?`<span class="cup">${total} active</span>`:'<span class="cnm">Add clients</span>');
+  set('st-execsN',`<span class="${totalExecs?'cup':'cnm'}">${totalExecs?totalExecs+' total':'No data yet'}</span>`);
+  set('st-rateN',rate>=90?'<span class="cup">↑ Healthy</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data</span>');
+  set('st-errsN',totalErrs?`<span class="cdn">↑ ${totalErrs} failed</span>`:totalExecs?'<span class="cup">All clear</span>':'<span class="cnm">No data</span>');
+  const badge=document.getElementById('aBadge');if(badge){badge.textContent=totalErrs;badge.style.display=totalErrs?'block':'none';}
+  const mnb=document.getElementById('mnBadge');if(mnb){mnb.textContent=totalErrs;mnb.style.display=totalErrs?'block':'none';}
+  if(totalErrs>0){set('talertTxt',`<b>${totalErrs} error${totalErrs>1?'s':''}</b> across your clients — check Alerts.`);document.getElementById('talert').style.display='flex';}
+  spark('spC',Array.from({length:7},()=>total),'vi');
+  spark('spE',Array.from({length:7},(_,i)=>Math.max(0,totalExecs*.7+Math.random()*totalExecs*.6)),'mi');
+  spark('spR',Array.from({length:7},()=>rate*.8+Math.random()*rate*.3),'mi');
+  spark('spEr',Array.from({length:7},()=>Math.random()*totalErrs*1.5),'re');
+}
+
+function renderOverviewTable(){
+  if(!S.clients.length){set('overviewBody','<tr><td colspan="7"><div class="empty"><div class="empty-i">👥</div>Add your first client to get started</div></td></tr>');return;}
+  const rows=S.clients.map(c=>{
+    const d=S.clientData[c.client_slug];const exs=d?.executions||[];
+    const total=exs.length,errs=exs.filter(e=>e.status==='error').length;
+    const health=calcHealth(exs);const hc=healthColor(health);
+    const wfs=[...new Set(exs.map(e=>e.workflowName))].length;
+    const last=exs[0];
+    const initials=c.client_name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    return`<tr style="cursor:pointer" onclick="openClientDetail('${c.client_slug}')">
+      <td><div style="display:flex;align-items:center;gap:9px">
+        <div style="width:26px;height:26px;border-radius:6px;background:${c.color||'var(--vi)'};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+        <div><div style="font-weight:600;font-size:12px">${esc(c.client_name)}</div><div style="font-size:9.5px;color:var(--tx3);font-family:'IBM Plex Mono',monospace">${c.client_slug}</div></div>
+      </div></td>
+      <td><span class="mono">${wfs||'—'}</span></td>
+      <td><span class="mono">${total||'—'}</span></td>
+      <td><div style="display:flex;flex-direction:column;gap:2px"><div style="height:3px;width:60px;background:var(--s3);border-radius:2px;overflow:hidden"><div style="height:100%;width:${health}%;background:${hc};border-radius:2px"></div></div><span style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:${hc}">${total?health+'%':'—'}</span></div></td>
+      <td><span style="color:${errs?'var(--re)':'var(--tx3)'};font-family:'IBM Plex Mono',monospace;font-size:11px">${errs||'—'}</span></td>
+      <td><span class="mono">${last?timeAgo(new Date(last.receivedAt)):'No data'}</span></td>
+      <td onclick="event.stopPropagation()"><button class="btn" style="font-size:9.5px;padding:4px 7px" onclick="refreshCurrentClientBySlug('${c.client_slug}')">↻</button></td>
+    </tr>`;
+  }).sort((a,b)=>0).join(''); // already sorted by load order
+  set('overviewBody',rows);
+}
+
+async function refreshCurrentClientBySlug(slug){
+  const c=S.clients.find(x=>x.client_slug===slug);if(!c)return;
+  await fetchClientData(c);renderClientsNav();renderOverviewTable();renderGlobalLog();
+  toast('Refreshed '+c.client_name,'ok');
+}
+
+function renderGlobalLog(){
+  const all=[];
+  S.clients.forEach(c=>{const d=S.clientData[c.client_slug];if(d&&d.status==='ok'){d.executions.slice(0,5).forEach(e=>all.push({...e,clientName:c.client_name,clientColor:c.color||'var(--vi)'}));}});
+  all.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt));
+  if(!all.length){set('globalLog','<div class="empty"><div class="empty-i">📋</div>Waiting…</div>');return;}
+  set('globalLog',all.slice(0,14).map(e=>`<div class="li"><div class="li-ic">${e.status==='error'?'❌':'✅'}</div><div class="li-b"><div class="li-t">${esc(e.workflowName)}</div><div class="li-s"><span style="color:${e.clientColor};font-size:9px">${esc(e.clientName)}</span> · ${fmtDur(e.durationMs)}</div></div><div class="li-time">${timeAgo(new Date(e.receivedAt))}</div></div>`).join(''));
+}
+
+function renderWorstHealth(){
+  const rows=[];
+  S.clients.forEach(c=>{const d=S.clientData[c.client_slug];if(d&&d.status==='ok'&&d.executions.length){const h=calcHealth(d.executions);rows.push({name:c.client_name,health:h});}});
+  rows.sort((a,b)=>a.health-b.health);
+  if(!rows.length){set('worstHealth','<div class="empty"><div class="empty-i">✅</div>All clients healthy</div>');return;}
+  set('worstHealth',rows.slice(0,5).map(r=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(r.name)}</span><span class="hr-v" style="color:${healthColor(r.health)}">${r.health}%</span></div><div class="hr-t"><div class="hr-f" style="width:${r.health}%;background:${healthColor(r.health)}"></div></div></div>`).join(''));
+}
+
+function renderAllAlerts(){
+  const all=[];
+  S.clients.forEach(c=>{const d=S.clientData[c.client_slug];if(d&&d.status==='ok'){d.executions.filter(e=>e.status==='error').forEach(e=>all.push({...e,clientName:c.client_name,clientColor:c.color||'var(--vi)'}));}});
+  set('alertsCount',all.length?all.length+' active errors':'All clients healthy ✅');
+  if(!all.length){set('alertsList','<div class="empty"><div class="empty-i">✅</div>No errors across any client!</div>');return;}
+  all.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt));
+  set('alertsList',all.map(e=>`<div style="display:flex;align-items:flex-start;gap:11px;padding:13px 17px;border-bottom:1px solid var(--b0)">
+    <div style="width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:var(--re2)">❌</div>
+    <div style="flex:1"><div style="font-size:12px;font-weight:600">${esc(e.workflowName)}</div>
+    <div style="font-size:11px;color:var(--tx3);margin-top:2px">${esc(e.errorMessage||'Execution failed')}</div>
+    <div style="display:flex;gap:8px;margin-top:5px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--tx3)"><span style="color:${e.clientColor}">${esc(e.clientName)}</span><span>·</span><span>${timeAgo(new Date(e.receivedAt))}</span></div></div>
+  </div>`).join(''));
+}
+
+// ── CLIENT DETAIL ──
+function openClientDetail(slug){
+  const client=S.clients.find(c=>c.client_slug===slug);if(!client)return;
+  S.activeClient=client;S.cdFilter='all';
+  navTo('client-detail',null);
+  document.getElementById('pageTitle').innerHTML=`${esc(client.client_name)}<span class="tb-sub">/ Client Detail</span>`;
+  renderClientsNav();
+  renderClientDetail(slug);
+}
+
+function renderClientDetail(slug){
+  const client=S.clients.find(c=>c.client_slug===slug);if(!client)return;
+  const d=S.clientData[slug];const exs=d?.executions||[];
+  const initials=client.client_name.split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const total=exs.length,succ=exs.filter(e=>e.status==='success').length,errs=exs.filter(e=>e.status==='error').length;
+  const health=calcHealth(exs);const hc=healthColor(health);
+  const wfs=[...new Set(exs.map(e=>e.workflowName))].length;
+  const baseUrl=window.location.href.replace(/[^/]*$/,'').replace('app.html','');
+  const statusUrl=window.location.origin+window.location.pathname.replace('app.html','')+`status.html?id=${slug}`;
+
+  set('cdHeader',`<div class="cd-avatar" style="background:${client.color||'var(--vi)'}">${initials}</div>
+    <div class="cd-info"><div class="cd-name">${esc(client.client_name)}</div>
+    <div class="cd-meta">${client.client_slug} · Added ${timeAgo(new Date(client.created_at))}${client.notes?' · '+esc(client.notes):''}</div></div>
+    <div class="cd-actions">
+      <button class="btn" onclick="openSPModal('${slug}')">🌐 Status Page</button>
+      <button class="btn" onclick="openEditCurrentClient()">✏️ Edit</button>
+      <button class="btn btn-re" onclick="deleteClient('${client.id}','${esc(client.client_name)}')">🗑️ Remove</button>
+    </div>`);
+
+  set('cdStats',`
+    <div class="stat"><div class="stat-top"><div class="stat-lbl">Workflows</div><div class="stat-ic ic-vi">⟳</div></div><div class="stat-val">${wfs||'—'}</div><div class="stat-note ${wfs?'cup':'cnm'}">${wfs?wfs+' unique':'No data yet'}</div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-lbl">Executions</div><div class="stat-ic ic-mi">▶</div></div><div class="stat-val">${total||'—'}</div><div class="stat-note ${total?'cup':'cnm'}">${total?total+' total':'Waiting for n8n'}</div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-lbl">Health Score</div><div class="stat-ic ic-mi">✓</div></div><div class="stat-val" style="color:${hc}">${total?health+'%':'—'}</div><div class="stat-note cnm">${succ} successful</div></div>
+    <div class="stat"><div class="stat-top"><div class="stat-lbl">Errors</div><div class="stat-ic ic-re">⚠</div></div><div class="stat-val" style="color:${errs?'var(--re)':'var(--tx)'}">${errs||'—'}</div><div class="stat-note ${errs?'cdn':'cnm'}">${errs?errs+' failed':'No errors ✅'}</div></div>`);
+
+  const cstat=d?.status==='ok'?'ok':d?.status==='error'?'er':'idle';
+  const ctxt=d?.status==='ok'?'Connected ✓':d?.status==='error'?'Unreachable ✗':'Not fetched';
+  set('cdConnStat',`<div class="conn-dot ${cstat}"></div><span>${ctxt}</span>`);
+  document.getElementById('cdConnStat').className=`conn-status ${cstat}`;
+  set('cdWorkerUrl',client.worker_url);
+  set('cdWebhookUrl',client.worker_url+'/webhook');
+  set('cdStatusUrl',statusUrl);
+
+  let filtered=[...exs];
+  if(S.cdFilter==='success')filtered=filtered.filter(e=>e.status==='success');
+  if(S.cdFilter==='error')filtered=filtered.filter(e=>e.status==='error');
+
+  if(!filtered.length){set('cdExecBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">${total?'🔍':'📡'}</div>${total?'No match':'Waiting for n8n webhooks…'}</div></td></tr>`);return;}
+  set('cdExecBody',filtered.map(e=>{const pc=e.status==='success'?'p-ok':e.status==='error'?'p-er':'p-mu';const pl=e.status==='success'?'OK':e.status==='error'?'Failed':'—';return`<tr><td><div style="font-weight:600;font-size:11.5px">${esc(e.workflowName)}</div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:110px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join(''));
+
+  const g={};exs.forEach(e=>{if(!g[e.workflowName])g[e.workflowName]=[];g[e.workflowName].push(e);});
+  const healthRows=Object.entries(g).map(([n,e])=>{const h=calcHealth(e);return{name:n,health:h};}).sort((a,b)=>a.health-b.health);
+  set('cdHealthList',healthRows.length?healthRows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${healthColor(h.health)}">${h.health}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.health}%;background:${healthColor(h.health)}"></div></div></div>`).join(''):'<div class="empty"><div class="empty-i">❤️</div>No data yet</div>');
+}
+
+function setCDFilter(el,f){document.querySelectorAll('#page-client-detail .filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.cdFilter=f;if(S.activeClient)renderClientDetail(S.activeClient.client_slug);}
+function openEditCurrentClient(){if(S.activeClient)openEditClientById(S.activeClient.id);}
+
+// ── ADD/EDIT CLIENT ──
+function openAddClient(){
+  S.editingClientId=null;
+  set('cmTitle','➕ Add New Client');set('cmSub','Each client gets their own Cloudflare Worker — complete data isolation.');
+  ['cm-name','cm-slug','cm-worker','cm-title','cm-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cm-color').value='#7c3aed';
+  updateSlugPreview();
+  document.getElementById('clientModal').classList.add('open');
+}
+
+function openEditClientById(id){
+  const c=S.clients.find(x=>x.id===id);if(!c)return;
+  S.editingClientId=id;
+  set('cmTitle','✏️ Edit Client');set('cmSub','Update this client\'s configuration.');
+  document.getElementById('cm-name').value=c.client_name||'';
+  document.getElementById('cm-slug').value=c.client_slug||'';
+  document.getElementById('cm-worker').value=c.worker_url||'';
+  document.getElementById('cm-title').value=c.status_page_title||'';
+  document.getElementById('cm-color').value=c.color||'#7c3aed';
+  document.getElementById('cm-notes').value=c.notes||'';
+  updateSlugPreview();
+  document.getElementById('clientModal').classList.add('open');
+}
+
+function closeClientModal(){document.getElementById('clientModal').classList.remove('open');S.editingClientId=null;}
+function autoSlug(){if(S.editingClientId)return;const name=document.getElementById('cm-name').value;document.getElementById('cm-slug').value=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,30);updateSlugPreview();}
+function cleanSlug(){const el=document.getElementById('cm-slug');el.value=el.value.toLowerCase().replace(/[^a-z0-9-]/g,'');updateSlugPreview();}
+function updateSlugPreview(){const slug=document.getElementById('cm-slug').value||'client-slug';set('slugPreview',`Status page: <span style="color:var(--ic)">status.html?id=${slug}</span>`);}
+
+async function saveClient(){
+  const name=document.getElementById('cm-name').value.trim();
+  const slug=document.getElementById('cm-slug').value.trim();
+  const worker=document.getElementById('cm-worker').value.trim().replace(/\/$/,'');
+  const title=document.getElementById('cm-title').value.trim()||name+' — Automation Status';
+  const color=document.getElementById('cm-color').value||'#7c3aed';
+  const notes=document.getElementById('cm-notes').value.trim();
+  if(!name)return toast('Enter client name','er');
+  if(!slug||!/^[a-z0-9-]+$/.test(slug))return toast('Slug: lowercase, numbers, hyphens only','er');
+  if(!worker||!worker.startsWith('http'))return toast('Enter a valid Worker URL (https://…)','er');
+  const btn=document.getElementById('cmSaveBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
+  const payload={user_id:S.user.id,client_name:name,client_slug:slug,worker_url:worker,status_page_title:title,color,notes,updated_at:new Date().toISOString()};
+  let error;
+  if(S.editingClientId){const res=await sb.from('clients').update(payload).eq('id',S.editingClientId);error=res.error;}
+  else{
+    const{data:ex}=await sb.from('clients').select('id').eq('client_slug',slug).eq('user_id',S.user.id);
+    if(ex?.length){btn.disabled=false;btn.innerHTML='Save Client →';return toast('Slug "'+slug+'" already exists','er');}
+    const res=await sb.from('clients').insert(payload);error=res.error;
+  }
+  btn.disabled=false;btn.innerHTML='Save Client →';
+  if(error)return toast('Supabase error: '+error.message,'er');
+  toast((S.editingClientId?'Updated':'Added client')+': '+name+' ✓','ok');
+  closeClientModal();await loadClients();
+}
+
+async function deleteClient(id,name){
+  if(!confirm('Remove "'+name+'" from your dashboard?\n\nThis does NOT delete their Cloudflare Worker — only removes them from this dashboard.'))return;
+  const{error}=await sb.from('clients').delete().eq('id',id);
+  if(error)return toast('Error: '+error.message,'er');
+  toast('Removed '+name,'ok');
+  if(S.activeClient?.id===id){S.activeClient=null;navTo('clients',null);}
+  await loadClients();
+}
+
+// ── STATUS PAGE MODAL ──
+function openSPModal(slug){
+  S.spTargetSlug=slug;
+  const client=S.clients.find(c=>c.client_slug===slug);
+  set('spModalSub',`Manage public status page for "${client?.client_name||slug}"`);
+  document.getElementById('sp-desc').value=client?.status_page_desc||'Real-time status of your automations';
+  const d=S.clientData[slug];const exs=d?.executions||[];
+  const existing=client?.public_workflows||[];
+  const names=[...new Set(exs.map(e=>e.workflowName))];
+  const list=document.getElementById('spWfList');
+  if(!names.length){list.innerHTML='<div style="color:var(--tx3);font-size:12px;padding:6px">No workflows yet — run some n8n workflows first</div>';}
+  else{list.innerHTML=names.map(n=>`<label style="display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:6px;cursor:pointer;font-size:12px;transition:background .15s" onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''"><input type="checkbox" value="${esc(n)}" ${existing.includes(n)?'checked':''} style="accent-color:var(--vi);width:13px;height:13px"/>${esc(n)}</label>`).join('');}
+  document.getElementById('spModal').classList.add('open');
+}
+function closeSPModal(){document.getElementById('spModal').classList.remove('open');S.spTargetSlug=null;}
+async function saveSPWorkflows(){
+  const slug=S.spTargetSlug;if(!slug)return;
+  const client=S.clients.find(c=>c.client_slug===slug);if(!client)return;
+  const desc=document.getElementById('sp-desc').value.trim();
+  const checked=[...document.querySelectorAll('#spWfList input:checked')].map(i=>i.value);
+  if(!checked.length)return toast('Select at least one workflow','er');
+  const btn=document.getElementById('spSaveBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span>';
+  const{error}=await sb.from('clients').update({public_workflows:checked,status_page_desc:desc,updated_at:new Date().toISOString()}).eq('id',client.id);
+  btn.disabled=false;btn.innerHTML='Save →';
+  if(error)return toast('Error: '+error.message,'er');
+  toast('Status page updated ✓','ok');closeSPModal();await loadClients();
 }
 
 // ── NAVIGATION ──
 const pageTitles={
-  dashboard:'Dashboard<span class="tb-sub">/ Live Overview</span>',
-  workflows:'Workflows<span class="tb-sub">/ All</span>',
-  executions:'Executions<span class="tb-sub">/ History</span>',
-  health:'Health Scores<span class="tb-sub">/ Overview</span>',
-  alerts:'Alerts<span class="tb-sub">/ Active</span>',
-  analytics:'Analytics<span class="tb-sub">/ Insights</span>',
-  statuspage:'Client Status Page<span class="tb-sub">/ Share</span>',
+  overview:'Overview<span class="tb-sub">/ All Clients</span>',
+  clients:'Clients<span class="tb-sub">/ Manage</span>',
+  alerts:'Alerts<span class="tb-sub">/ All Errors</span>',
   settings:'Settings<span class="tb-sub">/ Account</span>',
 };
 function navTo(page,el){
@@ -816,281 +960,19 @@ function navTo(page,el){
   else document.querySelectorAll('.ni').forEach(n=>{if(n.getAttribute('onclick')?.includes(`'${page}'`))n.classList.add('active');});
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page)?.classList.add('active');
-  document.getElementById('pageTitle').innerHTML=pageTitles[page]||page;
+  if(pageTitles[page])document.getElementById('pageTitle').innerHTML=pageTitles[page];
   S.currentPage=page;
-  renderPage(page);
+  if(page==='clients')renderClientsGrid();
+  if(page==='alerts')renderAllAlerts();
+  if(page==='overview'){renderOverviewStats();renderOverviewTable();renderGlobalLog();renderWorstHealth();}
 }
-function renderPage(p){
-  if(p==='workflows')renderWFPage();
-  if(p==='executions')renderExecPage();
-  if(p==='health')renderHealthPage();
-  if(p==='alerts')renderAlertsPage();
-  if(p==='analytics')renderAnalyticsPage();
-  if(p==='settings')renderSettingsPage();
-}
-
-// ── FETCH ──
-async function fetchData(bar=false){
-  const w=S.profile?.worker_url;if(!w)return;
-  if(bar)animBar();
-  setConn('idle','Syncing…');
-  try{
-    const res=await fetch(w+'/executions');
-    const data=await res.json();
-    S.executions=data.executions||[];
-    setConn('ok','Connected');
-    document.getElementById('curl').textContent=w;
-    document.getElementById('lastUp').textContent='Updated just now';
-    renderAll();
-    if(S.currentPage!=='dashboard')renderPage(S.currentPage);
-  }catch(e){setConn('er','Error: '+e.message);toast('Fetch failed — check Worker URL','er');}
-}
-function startTimer(){clearInterval(S.timer);S.timer=setInterval(()=>fetchData(),10000);}
-function animBar(){
-  const b=document.getElementById('progress');
-  b.classList.remove('run','end');void b.offsetWidth;
-  b.classList.add('run');
-  setTimeout(()=>{b.classList.remove('run');b.classList.add('end');setTimeout(()=>b.classList.remove('end'),400);},9800);
-}
-
-// ── RENDER ──
-function renderAll(){renderStats();renderWorkflows();renderLog();renderHealth();renderActivity();renderErrors();}
-function getGrouped(){const g={};S.executions.forEach(e=>{if(!g[e.workflowName])g[e.workflowName]=[];g[e.workflowName].push(e);});return g;}
-
-function renderStats(){
-  const exs=S.executions,names=[...new Set(exs.map(e=>e.workflowName))];
-  const total=exs.length,succ=exs.filter(e=>e.status==='success').length,errs=exs.filter(e=>e.status==='error').length;
-  const rate=total>0?Math.round((succ/total)*1000)/10:0;
-  const today=exs.filter(e=>isToday(new Date(e.receivedAt))).length;
-  set('sWf',names.length||'—');set('sEx',total?total.toLocaleString():'—');
-  document.getElementById('sSr').innerHTML=total?`${rate}<span style="font-size:14px;color:var(--tx3)">%</span>`:'—';
-  set('sEr',errs||'—');document.getElementById('sEr').style.color=errs?'var(--re)':'var(--tx)';
-  set('sWfN',names.length?`<span class="cup">${names.length} unique</span>`:'<span class="cnm">No data yet</span>');
-  set('sExN',today?`<span class="cup">↑ ${today} today</span>`:'<span class="cnm">No executions</span>');
-  set('sSrN',rate>=90?'<span class="cup">↑ Healthy</span>':rate>0?'<span class="cdn">↓ Needs attention</span>':'<span class="cnm">No data</span>');
-  set('sErN',errs>0?`<span class="cdn">↑ ${errs} failed</span>`:total?'<span class="cup">All clear</span>':'<span class="cnm">No data</span>');
-  set('aBadge',errs);updateMobBadge(errs);
-  if(errs>0){set('talertTxt',`<b>${errs} execution${errs>1?'s':''} failed</b> — check Alerts.`);document.getElementById('talert').style.display='flex';}
-  spark('spWf',Array.from({length:7},(_,i)=>i<6?Math.random()*names.length*.8+names.length*.2:names.length),'vi');
-  spark('spEx',mkSpark(exs),'mi');spark('spSr',[rate*.9,rate*.95,rate*.88,rate,rate*.97,rate*.93,rate],'mi');spark('spEr',mkErrSpark(exs),'re');
-}
-function spark(id,vals,cls){const max=Math.max(...vals,1);set(id,vals.map(v=>`<div class="sb ${cls}" style="height:${Math.max(8,(v/max)*100)}%"></div>`).join(''));}
-function mkSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
-function mkErrSpark(exs){return Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>e.status==='error'&&new Date(e.receivedAt).toDateString()===d.toDateString()).length;});}
-
-function setTab(el,t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));el.classList.add('active');S.tab=t;renderWorkflows();}
-function handleSearch(){S.searchQ=document.getElementById('srch').value.toLowerCase();renderWorkflows();if(S.currentPage==='executions')renderExecPage();}
-
-function renderWorkflows(){
-  const grouped=getGrouped();
-  let rows=Object.entries(grouped).map(([name,exs])=>{const succ=exs.filter(e=>e.status==='success').length;const health=Math.round((succ/exs.length)*100);const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];return{name,exs,health,last,hasErr:exs.some(e=>e.status==='error')};});
-  if(S.searchQ)rows=rows.filter(r=>r.name.toLowerCase().includes(S.searchQ));
-  if(S.tab==='success')rows=rows.filter(r=>r.last.status==='success');
-  if(S.tab==='error')rows=rows.filter(r=>r.hasErr);
-  set('wfCnt',rows.length+' workflows');
-  if(!rows.length){set('wfBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">${S.executions.length?'🔍':'📡'}</div>${S.executions.length?'No match':'Waiting for webhooks…'}</div></td></tr>`);return;}
-  set('wfBody',rows.map(r=>{
-    const hc=r.health>=80?'var(--mi)':r.health>=50?'var(--am)':'var(--re)';
-    const pc=r.last.status==='success'?'p-ok':r.last.status==='error'?'p-er':'p-mu';
-    const pl=r.last.status==='success'?'Success':r.last.status==='error'?'Failed':'Unknown';
-    const avg=Math.round(r.exs.reduce((a,e)=>a+(e.durationMs||0),0)/r.exs.length);
-    const ti=r.exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);
-    return`<tr><td><div class="wn"><div class="wn-m">${esc(r.name)}</div><div class="wn-s">${r.exs.length} execs</div></div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><div class="hb"><div class="hbr"><div class="hbf" style="width:${r.health}%;background:${hc}"></div></div><div class="hpct" style="color:${hc}">${r.health}%</div></div></td><td><span class="mono">${fmtDur(avg)}</span></td><td><span class="mono">${ti.toLocaleString()}</span></td><td><span class="mono">${timeAgo(new Date(r.last.receivedAt))}</span></td></tr>`;
-  }).join(''));
-}
-function renderLog(){
-  const exs=[...S.executions].slice(0,12);
-  if(!exs.length){set('logList','<div class="empty"><div class="empty-i">📋</div>Waiting…</div>');return;}
-  set('logList',exs.map(e=>{const icon=e.status==='error'?'❌':'✅';const sub=e.status==='error'?(e.errorMessage||'Failed'):`${fmtDur(e.durationMs)} · ${e.itemsProcessed} items`;return`<div class="li"><div class="li-ic">${icon}</div><div class="li-b"><div class="li-t">${esc(e.workflowName)}</div><div class="li-s">${esc(sub)}</div></div><div class="li-time">${timeAgo(new Date(e.receivedAt))}</div></div>`;}).join(''));
-}
-function renderHealth(){
-  const g=getGrouped();const rows=Object.entries(g).map(([name,exs])=>{const s=exs.filter(e=>e.status==='success').length;const score=Math.round((s/exs.length)*100);return{name,score,color:score>=80?'var(--mi)':score>=50?'var(--am)':'var(--re)'};}).sort((a,b)=>a.score-b.score).slice(0,6);
-  if(!rows.length){set('healthList','<div class="empty"><div class="empty-i">❤️</div>No data</div>');return;}
-  set('healthList',rows.map(h=>`<div class="hr"><div class="hr-top"><span class="hr-n">${esc(h.name)}</span><span class="hr-v" style="color:${h.color}">${h.score}%</span></div><div class="hr-t"><div class="hr-f" style="width:${h.score}%;background:${h.color}"></div></div></div>`).join(''));
-}
-function renderActivity(){
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return S.executions.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});
-  const max=Math.max(...counts,1);
-  set('actChart',days.map((d,i)=>`<div class="ac"><div class="acw"><div class="acb" style="height:${Math.max(4,(counts[i]/max)*100)}%"></div></div><div class="acl">${d}</div></div>`).join(''));
-}
-function renderErrors(){
-  const errs=S.executions.filter(e=>e.status==='error').slice(0,5);
-  set('errCnt',errs.length?errs.length+' active':'');
-  if(!errs.length){set('errList','<div class="empty"><div class="empty-i">✅</div>No errors</div>');return;}
-  set('errList',errs.map(e=>`<div class="ei"><div class="edot"></div><div class="eb"><div class="en">${esc(e.workflowName)}</div><div class="em">${esc(e.errorMessage||'Unknown error')}</div></div><div class="et">${timeAgo(new Date(e.receivedAt))}</div></div>`).join(''));
-}
-
-function renderWFPage(){
-  const g=getGrouped();const entries=Object.entries(g);
-  set('wfPageCount',entries.length+' workflows');
-  if(!entries.length){set('wfGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">📡</div>Waiting…</div>');return;}
-  set('wfGrid',entries.map(([name,exs])=>{
-    const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;
-    const health=Math.round((succ/exs.length)*100);const hc=health>=80?'var(--mi)':health>=50?'var(--am)':'var(--re)';
-    const last=exs.sort((a,b)=>new Date(b.receivedAt)-new Date(a.receivedAt))[0];
-    const ti=exs.reduce((a,e)=>a+(e.itemsProcessed||0),0);const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);
-    const pc=last.status==='success'?'p-ok':last.status==='error'?'p-er':'p-mu';
-    const pl=last.status==='success'?'Success':last.status==='error'?'Failed':'Unknown';
-    return`<div class="wf-card"><div class="wf-card-top"><div><div class="wf-card-name">${esc(name)}</div><div class="wf-card-id">Last run ${timeAgo(new Date(last.receivedAt))}</div></div><span class="pill ${pc}"><span class="pd"></span>${pl}</span></div><div class="wf-card-stats"><div class="wf-stat"><div class="wf-stat-val">${exs.length}</div><div class="wf-stat-lbl">Executions</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--re)">${errs}</div><div class="wf-stat-lbl">Errors</div></div><div class="wf-stat"><div class="wf-stat-val" style="color:var(--vi)">${fmtDur(avg)}</div><div class="wf-stat-lbl">Avg Time</div></div></div><div class="wf-hbar"><div class="wf-hbar-fill" style="width:${health}%;background:${hc}"></div></div><div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--tx3)"><span>Health: <b style="color:${hc}">${health}%</b></span><span>${ti.toLocaleString()} items</span></div></div>`;
-  }).join(''));
-}
-
-function setExecFilter(el,f){document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active');S.execFilter=f;renderExecPage();}
-function renderExecPage(){
-  let exs=[...S.executions];
-  if(S.execFilter==='success')exs=exs.filter(e=>e.status==='success');
-  if(S.execFilter==='error')exs=exs.filter(e=>e.status==='error');
-  if(S.searchQ)exs=exs.filter(e=>e.workflowName.toLowerCase().includes(S.searchQ));
-  set('execTotal',exs.length+' records');
-  if(!exs.length){set('execBody',`<tr><td colspan="6"><div class="empty"><div class="empty-i">📋</div>No executions</div></td></tr>`);return;}
-  set('execBody',exs.map(e=>{const pc=e.status==='success'?'p-ok':e.status==='error'?'p-er':'p-mu';const pl=e.status==='success'?'Success':e.status==='error'?'Failed':'Unknown';return`<tr><td><div class="wn-m">${esc(e.workflowName)}</div></td><td><span class="pill ${pc}"><span class="pd"></span>${pl}</span></td><td><span class="mono">${fmtDur(e.durationMs)}</span></td><td><span class="mono">${(e.itemsProcessed||0).toLocaleString()}</span></td><td><span class="mono" style="color:var(--re);max-width:130px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(e.errorMessage||'—')}</span></td><td><span class="mono">${timeAgo(new Date(e.receivedAt))}</span></td></tr>`;}).join(''));
-}
-
-function renderHealthPage(){
-  const g=getGrouped();const entries=Object.entries(g);
-  if(!entries.length){set('healthGrid','<div class="empty" style="grid-column:1/-1"><div class="empty-i">❤️</div>No data</div>');return;}
-  set('healthGrid',entries.map(([name,exs])=>{
-    const succ=exs.filter(e=>e.status==='success').length;const errs=exs.filter(e=>e.status==='error').length;
-    const score=Math.round((succ/exs.length)*100);const color=score>=80?'var(--mi)':score>=50?'var(--am)':'var(--re)';
-    const avg=Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/exs.length);
-    return`<div class="health-card"><div class="health-card-name">${esc(name)}</div><div class="health-big-score" style="color:${color}">${score}%</div><div class="health-sublbl">Health · ${exs.length} executions</div><div class="health-bars"><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Success Rate</span><span class="health-bar-val" style="color:var(--mi)">${score}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${score}%;background:var(--mi)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Error Rate</span><span class="health-bar-val" style="color:var(--re)">${Math.round((errs/exs.length)*100)}%</span></div><div class="health-bar-track"><div class="health-bar-fill" style="width:${Math.round((errs/exs.length)*100)}%;background:var(--re)"></div></div></div><div class="health-bar-row"><div class="health-bar-top"><span class="health-bar-name">Avg Duration</span><span class="health-bar-val">${fmtDur(avg)}</span></div></div></div></div>`;
-  }).join(''));
-}
-
-function renderAlertsPage(){
-  const errs=S.executions.filter(e=>e.status==='error');
-  set('alertsCount',errs.length?errs.length+' active':'All clear');
-  if(!errs.length){set('alertsList','<div class="empty"><div class="empty-i">✅</div>All workflows healthy!</div>');return;}
-  set('alertsList',errs.map(e=>`<div class="alert-item"><div class="alert-ico">❌</div><div class="alert-body"><div class="alert-title">${esc(e.workflowName)}</div><div class="alert-msg">${esc(e.failedNode?`Node: ${e.failedNode} — `:'')}${esc(e.errorMessage||'Execution failed')}</div><div class="alert-meta"><span>${timeAgo(new Date(e.receivedAt))}</span><span>·</span><span>${fmtDur(e.durationMs)}</span></div></div></div>`).join(''));
-}
-
-function renderAnalyticsPage(){
-  const exs=S.executions;const total=exs.length;const succ=exs.filter(e=>e.status==='success').length;
-  const rate=total>0?Math.round((succ/total)*1000)/10:0;const avg=total>0?Math.round(exs.reduce((a,e)=>a+(e.durationMs||0),0)/total):0;
-  set('an-total',total.toLocaleString());set('an-rate',rate+'%');set('an-avg',fmtDur(avg));
-  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-  const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return exs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});
-  const max=Math.max(...counts,1);
-  set('bigChart',days.map((d,i)=>`<div class="bc"><div class="bcw"><div class="bcb" style="height:${Math.max(4,(counts[i]/max)*100)}%;background:linear-gradient(180deg,rgba(124,58,237,.6),rgba(124,58,237,.12))"></div></div><div class="bcl">${d}</div></div>`).join(''));
-  const g=getGrouped();
-  const byC=Object.entries(g).sort((a,b)=>b[1].length-a[1].length).slice(0,5);
-  set('topActive',byC.length?byC.map(([n,e],i)=>`<div class="top-item"><div class="top-rank ${i===0?'g':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val">${e.length} runs</div></div>`).join(''):'<div class="empty">No data</div>');
-  const byR=Object.entries(g).filter(([,e])=>e.length>=2).map(([n,e])=>{const s=e.filter(x=>x.status==='success').length;return[n,Math.round((s/e.length)*100)];}).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  set('topReliable',byR.length?byR.map(([n,r],i)=>`<div class="top-item"><div class="top-rank ${i===0?'g':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val" style="color:var(--mi)">${r}%</div></div>`).join(''):'<div class="empty">Need 2+ runs</div>');
-}
-
-function renderSettingsPage(){
-  set('set-name',S.profile?.name||'—');set('set-email',S.user?.email||'—');
-  set('set-uid',(S.user?.id||'').slice(0,18)+'…');set('set-worker',S.profile?.worker_url||'Not set');
-}
-
-// ── WORKER MODAL ──
-function showModal(){document.getElementById('mWorker').value=S.profile?.worker_url||'';document.getElementById('modal').classList.add('open');}
-function closeModal(){document.getElementById('modal').classList.remove('open');}
-function closeModalOut(e){if(e.target.id==='modal')closeModal();}
-async function saveWorkerUrl(){
-  const w=document.getElementById('mWorker').value.trim().replace(/\/$/,'');
-  if(!w)return toast('Enter a Worker URL','er');
-  const btn=document.getElementById('mSaveBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
-  const{error}=await sb.from('profiles').upsert({id:S.user.id,name:S.profile?.name||'',worker_url:w});
-  btn.disabled=false;btn.innerHTML='Save to Supabase →';
-  if(error)return toast('Error: '+error.message,'er');
-  S.profile={...S.profile,worker_url:w};
-  updateConnUI();closeModal();set('set-worker',w);
-  toast('Worker URL saved ✓','ok');
-  clearInterval(S.timer);fetchData(true);startTimer();
-}
-function updateConnUI(){
-  const w=S.profile?.worker_url||'';
-  document.getElementById('curl').textContent=w||'No worker configured';
-  document.getElementById('whUrlBox').textContent=w?w+'/webhook':'Configure Worker URL in Settings →';
-  document.getElementById('mWorker').value=w;
-  if(document.getElementById('set-worker'))set('set-worker',w||'Not set');
-}
-function copyWebhook(){const w=S.profile?.worker_url;if(!w)return toast('Configure Worker URL first','er');navigator.clipboard.writeText(w+'/webhook').then(()=>toast('Webhook URL copied!','ok'));}
-function setConn(type,text){
-  ['cstat','settingsConnStat'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`conn-status ${type}`;});
-  ['cdot','settingsConnDot'].forEach(id=>{const el=document.getElementById(id);if(el)el.className=`conn-dot ${type}`;});
-  ['ctxt','settingsConnTxt'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=text;});
-}
-async function clearData(){
-  const w=S.profile?.worker_url;if(!w)return toast('No worker configured','er');
-  if(!confirm('Delete all execution data?'))return;
-  try{await fetch(w+'/executions',{method:'DELETE'});S.executions=[];renderAll();toast('Data cleared','ok');}
-  catch{toast('Failed','er');}
-}
-
-// ── STATUS PAGE ──
-function openShareModal(){
-  const names=[...new Set(S.executions.map(e=>e.workflowName))];
-  const existing=S.statusPage?.public_workflows||[];
-  const list=document.getElementById('sp-wf-list');
-  if(!names.length){list.innerHTML='<div style="color:var(--tx3);font-size:12px;padding:8px">No workflows yet — run some executions first</div>';}
-  else{list.innerHTML=names.map(n=>`<label style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;transition:background .15s;font-size:12.5px" onmouseenter="this.style.background='var(--s3)'" onmouseleave="this.style.background=''"><input type="checkbox" value="${esc(n)}" ${existing.includes(n)?'checked':''} style="accent-color:var(--vi);width:14px;height:14px"/>${esc(n)}</label>`).join('');}
-  document.getElementById('sp-title').value=S.statusPage?.page_title||'';
-  document.getElementById('sp-desc').value=S.statusPage?.page_description||'';
-  document.getElementById('shareModal').classList.add('open');
-}
-function closeShareModal(){document.getElementById('shareModal').classList.remove('open');}
-function closeShareOut(e){if(e.target.id==='shareModal')closeShareModal();}
-async function saveStatusPage(){
-  const title=document.getElementById('sp-title').value.trim()||'Workflow Status';
-  const desc=document.getElementById('sp-desc').value.trim()||'Real-time status of all monitored automations';
-  const checked=[...document.querySelectorAll('#sp-wf-list input:checked')].map(i=>i.value);
-  if(!checked.length)return toast('Select at least one workflow','er');
-  const btn=document.getElementById('spSaveBtn');
-  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Saving…';
-  const pageId=S.user.id.replace(/-/g,'').slice(0,16);
-  const payload={user_id:S.user.id,page_id:pageId,page_title:title,page_description:desc,worker_url:S.profile?.worker_url||'',public_workflows:checked,updated_at:new Date().toISOString()};
-  const{error}=await sb.from('status_pages').upsert(payload,{onConflict:'page_id'});
-  btn.disabled=false;btn.innerHTML='Save & Generate Link →';
-  if(error)return toast('Error: '+error.message,'er');
-  S.statusPage=payload;closeShareModal();toast('Status page saved! ✓','ok');renderStatusPagePanel();
-}
-async function loadStatusPage(){
-  if(!S.user)return;
-  const pageId=S.user.id.replace(/-/g,'').slice(0,16);
-  const{data}=await sb.from('status_pages').select('*').eq('page_id',pageId).single();
-  if(data)S.statusPage=data;renderStatusPagePanel();
-}
-function renderStatusPagePanel(){
-  if(!S.statusPage)return;
-  const pageId=S.statusPage.page_id;
-  const baseUrl=window.location.origin+window.location.pathname.replace('app.html','').replace('index.html','');
-  const url=`${baseUrl}status.html?id=${pageId}`;
-  document.getElementById('statusPagePreview').style.display='block';
-  document.getElementById('viewStatusBtn').style.display='inline-flex';
-  document.getElementById('spLinkBox').textContent=url;
-  document.getElementById('spLinkLabel').textContent=S.statusPage.page_title||'';
-  const wfs=S.statusPage.public_workflows||[];
-  document.getElementById('spPublicList').innerHTML=wfs.map(w=>`<span class="sp-wf-chip">${esc(w)}</span>`).join('');
-}
-function copyStatusLink(){const url=document.getElementById('spLinkBox').textContent;navigator.clipboard.writeText(url).then(()=>toast('Status page URL copied! 🔗','ok'));}
-function viewStatusPage(){window.open(document.getElementById('spLinkBox').textContent,'_blank');}
-
-// ── PWA ──
-let deferredPrompt=null;
-if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
-window.addEventListener('beforeinstallprompt',(e)=>{
-  e.preventDefault();deferredPrompt=e;
-  const sb2=document.getElementById('sidebarInstallBtn');if(sb2)sb2.style.display='flex';
-  setTimeout(()=>{if(!window.matchMedia('(display-mode: standalone)').matches){const b=document.getElementById('pwaBanner');if(b)b.style.display='flex';}},4000);
-});
-window.addEventListener('appinstalled',()=>{dismissPWA();toast('FlowPulse installed! 🎉','ok');});
-async function installPWA(){
-  if(!deferredPrompt){toast('Tap Share → "Add to Home Screen" on iOS','in');return;}
-  deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;deferredPrompt=null;dismissPWA();
-  if(outcome==='accepted')toast('Installing FlowPulse… 🚀','ok');
-}
-function dismissPWA(){const b=document.getElementById('pwaBanner');if(b)b.style.display='none';const s=document.getElementById('sidebarInstallBtn');if(s)s.style.display='none';}
-
-// ── MOBILE ──
-function setMobNav(page){document.querySelectorAll('.mn-item').forEach(el=>el.classList.remove('active'));const el=document.getElementById('mn-'+page);if(el)el.classList.add('active');}
-function updateMobBadge(count){const b=document.getElementById('mnBadge');if(!b)return;if(count>0){b.style.display='block';b.textContent=count;}else b.style.display='none';}
 
 // ── HELPERS ──
+function calcHealth(exs){if(!exs.length)return 0;return Math.round((exs.filter(e=>e.status==='success').length/exs.length)*100);}
+function healthColor(h){return h>=80?'var(--mi)':h>=50?'var(--am)':'var(--re)';}
+function spark(id,vals,cls){const max=Math.max(...vals,1);const colors={vi:'rgba(124,58,237,.4)',mi:'rgba(16,185,129,.35)',re:'rgba(239,68,68,.35)',am:'rgba(245,158,11,.35)'};set(id,vals.map(v=>`<div class="sb" style="height:${Math.max(8,(v/max)*100)}%;background:${colors[cls]||colors.vi}"></div>`).join(''));}
+function animBar(){const b=document.getElementById('progress');b.classList.remove('run','end');void b.offsetWidth;b.classList.add('run');setTimeout(()=>{b.classList.remove('run');b.classList.add('end');setTimeout(()=>b.classList.remove('end'),400);},9800);}
+function copyText(text,label){navigator.clipboard.writeText(text).then(()=>toast(label+' copied!','ok')).catch(()=>toast('Copy failed — select manually','er'));}
 function show(id){const el=document.getElementById(id);if(el)el.style.display='block';}
 function hide(id){const el=document.getElementById(id);if(el)el.style.display='none';}
 function set(id,html){const el=document.getElementById(id);if(el)el.innerHTML=html;}
@@ -1099,9 +981,17 @@ function errHide(id){const el=document.getElementById(id);if(el)el.style.display
 function togglePw(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.textContent=i.type==='password'?'👁':'🙈';}
 function timeAgo(d){if(!d||isNaN(d))return'—';const s=Math.floor((Date.now()-d)/1000);if(s<10)return'just now';if(s<60)return s+'s ago';if(s<3600)return Math.floor(s/60)+'m ago';if(s<86400)return Math.floor(s/3600)+'h ago';return Math.floor(s/86400)+'d ago';}
 function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)return(ms/1000).toFixed(1)+'s';return Math.floor(ms/60000)+'m '+Math.floor((ms%60000)/1000)+'s';}
-function isToday(d){const t=new Date();return d.getDate()===t.getDate()&&d.getMonth()===t.getMonth()&&d.getFullYear()===t.getFullYear();}
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(6px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
+function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(5px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
+
+// PWA
+let deferredPrompt=null;
+if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;const s=document.getElementById('sidebarInstallBtn');if(s)s.style.display='flex';setTimeout(()=>{if(!window.matchMedia('(display-mode: standalone)').matches){const b=document.getElementById('pwaBanner');if(b)b.style.display='flex';}},5000);});
+window.addEventListener('appinstalled',()=>{dismissPWA();toast('HKB Dashboard installed! 🎉','ok');});
+async function installPWA(){if(!deferredPrompt){toast('Tap Share → "Add to Home Screen" on iOS','in');return;}deferredPrompt.prompt();const{outcome}=await deferredPrompt.userChoice;deferredPrompt=null;dismissPWA();}
+function dismissPWA(){const b=document.getElementById('pwaBanner');if(b)b.style.display='none';const s=document.getElementById('sidebarInstallBtn');if(s)s.style.display='none';}
+function setMobNav(page){document.querySelectorAll('.mn-item').forEach(el=>el.classList.remove('active'));const el=document.getElementById('mn-'+page);if(el)el.classList.add('active');}
 
 init();
 </script>
