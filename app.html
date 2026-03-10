@@ -259,7 +259,26 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 .filter-btn{padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--b1);background:var(--s1);color:var(--tx2);transition:all .15s;font-family:'Bricolage Grotesque',sans-serif}
 .filter-btn.active{background:var(--vi2);border-color:rgba(124,58,237,.3);color:var(--tx)}
 
-/* EMPTY */
+/* ANALYTICS */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:13px}
+.big-chart{display:flex;align-items:flex-end;gap:4px;height:90px;padding:12px 15px}
+.bc{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.bcw{flex:1;display:flex;align-items:flex-end;width:100%}
+.bcb{width:100%;border-radius:3px 3px 0 0;min-height:3px}
+.bcl{font-size:8px;color:var(--tx3);font-family:'IBM Plex Mono',monospace}
+.an-stat{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rad2);padding:20px}
+.an-stat-val{font-size:26px;font-weight:800;letter-spacing:-1px;font-family:'IBM Plex Mono',monospace;margin-bottom:3px}
+.an-stat-lbl{font-size:9.5px;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px}
+.top-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--b0)}
+.top-item:last-child{border-bottom:none}
+.top-rank{width:20px;height:20px;border-radius:50%;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:var(--tx3);flex-shrink:0}
+.top-rank.g{background:var(--am2);color:var(--am)}
+.top-name{flex:1;font-size:12px;font-weight:600}
+.top-val{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--tx3)}
+@media(max-width:768px){.analytics-grid{grid-template-columns:1fr}}
+/* CLIENT PORTAL CSS (for create login panel) */
+.client-login-box{background:var(--vi3);border:1px solid rgba(124,58,237,.2);border-radius:9px;padding:14px 16px;margin-top:12px}
+
 .empty{padding:24px;text-align:center;color:var(--tx3);font-size:12px}
 .empty-i{font-size:22px;margin-bottom:6px}
 
@@ -375,6 +394,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
       <div class="ni active" onclick="navTo('overview',this)"><span class="ni-ic">⬡</span>Overview<span class="ni-count" id="clientCountBadge"></span></div>
       <div class="ni" onclick="navTo('clients',this)"><span class="ni-ic">👥</span>All Clients</div>
       <div class="ni" onclick="navTo('alerts',this)"><span class="ni-ic">⚠</span>All Alerts<span class="ni-badge" id="aBadge" style="display:none">0</span></div>
+      <div class="ni" onclick="navTo('analytics',this)"><span class="ni-ic">↗</span>Analytics</div>
       <div class="s-sec"><span>Clients</span><span class="s-sec-add" onclick="openAddClient()">+ Add</span></div>
       <div id="clientsNavList"><div style="padding:6px 9px;font-size:10.5px;color:var(--tx3)">No clients yet</div></div>
       <div class="s-sec">Account</div>
@@ -455,10 +475,31 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
                 <button class="btn btn-vi" style="flex:1;justify-content:center" onclick="refreshCurrentClient()">↻ Refresh</button>
                 <button class="btn" style="flex:1;justify-content:center" onclick="openEditCurrentClient()">✏️ Edit</button>
               </div>
+              <div class="client-login-box" style="margin-top:12px">
+                <div style="font-size:11px;font-weight:700;color:var(--ic);margin-bottom:4px">🔐 Client Login Portal</div>
+                <div style="font-size:10.5px;color:var(--tx3);margin-bottom:9px">Create a login so your client can access their own dashboard at <span style="color:var(--ic)">client.html</span></div>
+                <button class="btn btn-vi" style="width:100%;justify-content:center;font-size:11px" onclick="openCreateClientLogin()">+ Create Client Login</button>
+              </div>
             </div>
           </div>
           <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Workflow Health</div></div><div class="hl" id="cdHealthList"><div class="empty"><div class="empty-i">❤️</div>No data</div></div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="analytics-grid">
+        <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Executions — Last 7 Days</div><div class="cm">all clients combined</div></div><div class="big-chart" id="bigChart"><div class="empty" style="width:100%">No data yet</div></div></div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div class="an-stat"><div class="an-stat-val" id="an-total">—</div><div class="an-stat-lbl">Total Executions</div></div>
+          <div class="an-stat"><div class="an-stat-val" id="an-rate" style="color:var(--mi)">—</div><div class="an-stat-lbl">Overall Success Rate</div></div>
+          <div class="an-stat"><div class="an-stat-val" id="an-avg" style="color:var(--vi)">—</div><div class="an-stat-lbl">Avg Duration</div></div>
+        </div>
+      </div>
+      <div class="b2">
+        <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Most Active Clients</div><div class="cm">by executions</div></div><div id="topClients"><div class="empty">No data</div></div></div>
+        <div class="card" style="margin-bottom:0"><div class="ch"><div class="ct">Top Workflows</div><div class="cm">across all clients</div></div><div id="topWorkflows"><div class="empty">No data</div></div></div>
       </div>
     </div>
 
@@ -499,6 +540,7 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="mob-nav-inner">
       <div class="mn-item active" id="mn-overview" onclick="navTo('overview',null);setMobNav('overview')"><div class="mn-icon">⬡</div><div class="mn-lbl">Overview</div></div>
       <div class="mn-item" id="mn-clients" onclick="navTo('clients',null);setMobNav('clients')"><div class="mn-icon">👥</div><div class="mn-lbl">Clients</div></div>
+      <div class="mn-item" id="mn-analytics" onclick="navTo('analytics',null);setMobNav('analytics')"><div class="mn-icon">↗</div><div class="mn-lbl">Analytics</div></div>
       <div class="mn-item" id="mn-alerts" onclick="navTo('alerts',null);setMobNav('alerts')"><div class="mn-icon">⚠</div><div class="mn-lbl">Alerts</div><div class="mn-badge" id="mnBadge" style="display:none">0</div></div>
       <div class="mn-item" id="mn-settings" onclick="navTo('settings',null);setMobNav('settings')"><div class="mn-icon">◈</div><div class="mn-lbl">Settings</div></div>
     </div>
@@ -539,6 +581,22 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="mac">
       <button class="btn" onclick="closeSPModal()">Cancel</button>
       <button class="btn btn-vi" id="spSaveBtn" onclick="saveSPWorkflows()">Save →</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE CLIENT LOGIN MODAL -->
+<div class="mbg" id="clModal" onclick="if(event.target===this)closeClientLoginModal()">
+  <div class="modal">
+    <div class="mh">🔐 Create Client Login</div>
+    <div class="ms">Create login credentials for <b id="clModalClientName" style="color:var(--tx)">Client</b>. They will log in at <span style="color:var(--ic)">client.html</span> and see only their own workflows.</div>
+    <div class="fg"><div class="fl">Client's Email</div><input class="fi" id="cl-email" type="email" placeholder="client@acmecorp.com"/></div>
+    <div class="fg"><div class="fl">Temporary Password</div><input class="fi" id="cl-pass" type="text" placeholder="Min 8 characters — share securely"/></div>
+    <div style="background:var(--am2);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--am);margin-bottom:4px">⚠ Share the password securely (WhatsApp, email). Client can change it after logging in.</div>
+    <div class="auth-err" id="cl-err"></div>
+    <div class="mac">
+      <button class="btn" onclick="closeClientLoginModal()">Cancel</button>
+      <button class="btn btn-vi" id="clSaveBtn" onclick="createClientLogin()">Create Login →</button>
     </div>
   </div>
 </div>
@@ -951,6 +1009,7 @@ async function saveSPWorkflows(){
 const pageTitles={
   overview:'Overview<span class="tb-sub">/ All Clients</span>',
   clients:'Clients<span class="tb-sub">/ Manage</span>',
+  analytics:'Analytics<span class="tb-sub">/ Insights</span>',
   alerts:'Alerts<span class="tb-sub">/ All Errors</span>',
   settings:'Settings<span class="tb-sub">/ Account</span>',
 };
@@ -964,6 +1023,7 @@ function navTo(page,el){
   S.currentPage=page;
   if(page==='clients')renderClientsGrid();
   if(page==='alerts')renderAllAlerts();
+  if(page==='analytics')renderAnalytics();
   if(page==='overview'){renderOverviewStats();renderOverviewTable();renderGlobalLog();renderWorstHealth();}
 }
 
@@ -984,8 +1044,63 @@ function fmtDur(ms){if(!ms)return'—';if(ms<1000)return ms+'ms';if(ms<60000)ret
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function toast(msg,type='ok'){const w=document.getElementById('tw');const el=document.createElement('div');el.className=`toast ${type}`;el.innerHTML=`${type==='ok'?'✅':type==='er'?'❌':'ℹ️'} ${msg}`;w.appendChild(el);setTimeout(()=>{el.style.opacity='0';el.style.transform='translateY(5px)';el.style.transition='all .3s';setTimeout(()=>el.remove(),300);},3500);}
 
-// PWA
-let deferredPrompt=null;
+// ── ANALYTICS ──
+function renderAnalytics(){
+  const allExecs=[];
+  S.clients.forEach(c=>{const d=S.clientData[c.client_slug];if(d&&d.status==='ok')d.executions.forEach(e=>allExecs.push({...e,clientName:c.client_name}));});
+  const total=allExecs.length;
+  const succ=allExecs.filter(e=>e.status==='success').length;
+  const rate=total?Math.round((succ/total)*1000)/10:0;
+  const avg=total?Math.round(allExecs.reduce((a,e)=>a+(e.durationMs||0),0)/total):0;
+  set('an-total',total.toLocaleString()||'—');
+  set('an-rate',total?rate+'%':'—');
+  set('an-avg',total?fmtDur(avg):'—');
+  // 7-day chart
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const counts=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return allExecs.filter(e=>new Date(e.receivedAt).toDateString()===d.toDateString()).length;});
+  const max=Math.max(...counts,1);
+  set('bigChart',days.map((d,i)=>`<div class="bc"><div class="bcw"><div class="bcb" style="height:${Math.max(4,(counts[i]/max)*100)}%;background:linear-gradient(180deg,rgba(124,58,237,.6),rgba(124,58,237,.12))"></div></div><div class="bcl">${d}</div></div>`).join(''));
+  // Top clients
+  const byClient=S.clients.map(c=>{const d=S.clientData[c.client_slug];const exs=d?.executions||[];return{name:c.client_name,count:exs.length,color:c.color||'var(--vi)'};}).filter(c=>c.count>0).sort((a,b)=>b.count-a.count).slice(0,5);
+  set('topClients',byClient.length?byClient.map((c,i)=>`<div class="top-item"><div class="top-rank ${i===0?'g':''}">${i+1}</div><div style="display:flex;align-items:center;gap:7px;flex:1"><div style="width:8px;height:8px;border-radius:50%;background:${c.color}"></div><div class="top-name">${esc(c.name)}</div></div><div class="top-val">${c.count} runs</div></div>`).join(''):'<div class="empty">No data</div>');
+  // Top workflows across all clients
+  const wfMap={};allExecs.forEach(e=>{if(!wfMap[e.workflowName])wfMap[e.workflowName]={count:0,succ:0};wfMap[e.workflowName].count++;if(e.status==='success')wfMap[e.workflowName].succ++;});
+  const byWf=Object.entries(wfMap).sort((a,b)=>b[1].count-a[1].count).slice(0,5);
+  set('topWorkflows',byWf.length?byWf.map(([n,v],i)=>{const r=Math.round((v.succ/v.count)*100);return`<div class="top-item"><div class="top-rank ${i===0?'g':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val" style="color:${r>=80?'var(--mi)':r>=50?'var(--am)':'var(--re)'}">${r}%</div></div>`;}).join(''):'<div class="empty">No data</div>');
+}
+
+// ── CLIENT LOGIN ──
+function openCreateClientLogin(){
+  if(!S.activeClient)return;
+  document.getElementById('clModalClientName').textContent=S.activeClient.client_name;
+  document.getElementById('cl-email').value='';
+  document.getElementById('cl-pass').value='';
+  document.getElementById('cl-err').style.display='none';
+  document.getElementById('clModal').classList.add('open');
+}
+function closeClientLoginModal(){document.getElementById('clModal').classList.remove('open');}
+async function createClientLogin(){
+  const email=document.getElementById('cl-email').value.trim();
+  const pass=document.getElementById('cl-pass').value;
+  const clErr=document.getElementById('cl-err');
+  clErr.style.display='none';
+  if(!email||!email.includes('@')){clErr.textContent='Enter a valid email.';clErr.style.display='block';return;}
+  if(pass.length<8){clErr.textContent='Password must be 8+ characters.';clErr.style.display='block';return;}
+  const btn=document.getElementById('clSaveBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  // Create auth user via Supabase admin (uses anon key — user will be created)
+  const{data,error}=await sb.auth.signUp({email,password:pass,options:{data:{client_slug:S.activeClient.client_slug,role:'client'}}});
+  btn.disabled=false;btn.innerHTML='Create Login →';
+  if(error){clErr.textContent=error.message;clErr.style.display='block';return;}
+  // Save profile with client_slug so client.html knows who they are
+  if(data.user){
+    await sb.from('profiles').upsert({id:data.user.id,name:S.activeClient.client_name,worker_url:S.activeClient.worker_url,client_slug:S.activeClient.client_slug,role:'client'});
+  }
+  closeClientLoginModal();
+  toast('Client login created for '+S.activeClient.client_name+' ✓','ok');
+  toast('Share client.html with: '+email,'in');
+}
+
+
 if('serviceWorker'in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});}
 window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;const s=document.getElementById('sidebarInstallBtn');if(s)s.style.display='flex';setTimeout(()=>{if(!window.matchMedia('(display-mode: standalone)').matches){const b=document.getElementById('pwaBanner');if(b)b.style.display='flex';}},5000);});
 window.addEventListener('appinstalled',()=>{dismissPWA();toast('HKB Dashboard installed! 🎉','ok');});
