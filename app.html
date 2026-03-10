@@ -520,6 +520,16 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
         </div>
       </div>
       <div class="settings-sec">
+        <div class="settings-sec-title">Team Members — Agency Access</div>
+        <div class="settings-card">
+          <div style="padding:14px 17px;border-bottom:1px solid var(--b0)">
+            <div style="font-size:12px;color:var(--tx2);line-height:1.7;margin-bottom:12px">Team members can log into <span style="color:var(--ic);font-family:'IBM Plex Mono',monospace">app.html</span> and see all clients, just like you. They <b style="color:var(--tx)">cannot</b> access <span style="color:var(--ic);font-family:'IBM Plex Mono',monospace">client.html</span>.</div>
+            <button class="btn btn-vi" onclick="openTeamModal()">+ Invite Team Member</button>
+          </div>
+          <div id="teamList"><div class="empty" style="padding:16px"><div class="empty-i" style="font-size:16px">👥</div>No team members yet</div></div>
+        </div>
+      </div>
+      <div class="settings-sec">
         <div class="settings-sec-title">How to Add a New Client</div>
         <div class="settings-card">
           <div style="padding:16px 17px;font-size:12px;color:var(--tx2);line-height:1.9">
@@ -581,6 +591,25 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
     <div class="mac">
       <button class="btn" onclick="closeSPModal()">Cancel</button>
       <button class="btn btn-vi" id="spSaveBtn" onclick="saveSPWorkflows()">Save →</button>
+    </div>
+  </div>
+</div>
+
+<!-- INVITE TEAM MEMBER MODAL -->
+<div class="mbg" id="teamModal" onclick="if(event.target===this)closeTeamModal()">
+  <div class="modal">
+    <div class="mh">👥 Invite Team Member</div>
+    <div class="ms">They'll be able to log into <span style="color:var(--ic)">app.html</span> and see all clients — full agency access.</div>
+    <div class="fg"><div class="fl">Their Name</div><input class="fi" id="tm-name" placeholder="e.g. Ahmed Khan"/></div>
+    <div class="fg"><div class="fl">Their Email</div><input class="fi" id="tm-email" type="email" placeholder="ahmed@hkbautomations.com"/></div>
+    <div class="fg"><div class="fl">Temporary Password</div><input class="fi" id="tm-pass" type="text" placeholder="Min 8 characters — share securely"/></div>
+    <div style="background:var(--vi3);border:1px solid rgba(124,58,237,.2);border-radius:8px;padding:10px 12px;font-size:11px;color:var(--tx2);line-height:1.6">
+      💡 They log in at <b style="color:var(--ic)">app.html</b> with this email &amp; password. Share the password securely (WhatsApp / Signal).
+    </div>
+    <div class="auth-err" id="tm-err"></div>
+    <div class="mac">
+      <button class="btn" onclick="closeTeamModal()">Cancel</button>
+      <button class="btn btn-vi" id="tmSaveBtn" onclick="createTeamMember()">Create Account →</button>
     </div>
   </div>
 </div>
@@ -1024,6 +1053,7 @@ function navTo(page,el){
   if(page==='clients')renderClientsGrid();
   if(page==='alerts')renderAllAlerts();
   if(page==='analytics')renderAnalytics();
+  if(page==='settings')loadTeamMembers();
   if(page==='overview'){renderOverviewStats();renderOverviewTable();renderGlobalLog();renderWorstHealth();}
 }
 
@@ -1069,7 +1099,66 @@ function renderAnalytics(){
   set('topWorkflows',byWf.length?byWf.map(([n,v],i)=>{const r=Math.round((v.succ/v.count)*100);return`<div class="top-item"><div class="top-rank ${i===0?'g':''}">${i+1}</div><div class="top-name">${esc(n)}</div><div class="top-val" style="color:${r>=80?'var(--mi)':r>=50?'var(--am)':'var(--re)'}">${r}%</div></div>`;}).join(''):'<div class="empty">No data</div>');
 }
 
-// ── CLIENT LOGIN ──
+// ── TEAM MEMBERS ──
+function openTeamModal(){
+  ['tm-name','tm-email','tm-pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('tm-err').style.display='none';
+  document.getElementById('teamModal').classList.add('open');
+}
+function closeTeamModal(){document.getElementById('teamModal').classList.remove('open');}
+
+async function createTeamMember(){
+  const name=document.getElementById('tm-name').value.trim();
+  const email=document.getElementById('tm-email').value.trim();
+  const pass=document.getElementById('tm-pass').value;
+  const err=document.getElementById('tm-err');
+  err.style.display='none';
+  if(!name){err.textContent='Enter their name.';err.style.display='block';return;}
+  if(!email||!email.includes('@')){err.textContent='Enter a valid email.';err.style.display='block';return;}
+  if(pass.length<8){err.textContent='Password must be 8+ characters.';err.style.display='block';return;}
+  const btn=document.getElementById('tmSaveBtn');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating…';
+  const{data,error}=await sb.auth.signUp({email,password:pass});
+  btn.disabled=false;btn.innerHTML='Create Account →';
+  if(error){err.textContent=error.message;err.style.display='block';return;}
+  if(data.user){
+    // role='agency', no client_slug → they can access app.html fully
+    await sb.from('profiles').upsert({id:data.user.id,name,worker_url:'',role:'agency',client_slug:null});
+  }
+  closeTeamModal();
+  toast(name+' can now log into app.html ✓','ok');
+  toast('Share with '+email+': app.html + password','in');
+  loadTeamMembers();
+}
+
+async function loadTeamMembers(){
+  // Load all agency profiles except current user
+  const{data}=await sb.from('profiles').select('*').eq('role','agency').neq('id',S.user.id);
+  const members=data||[];
+  if(!members.length){set('teamList','<div class="empty" style="padding:16px"><div class="empty-i" style="font-size:16px">👥</div>No team members yet</div>');return;}
+  set('teamList',members.map(m=>`
+    <div class="settings-row">
+      <div class="settings-row-l">
+        <div class="settings-row-name" style="display:flex;align-items:center;gap:8px">
+          <div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--vi),var(--ic));display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700">${esc((m.name||'?').slice(0,2).toUpperCase())}</div>
+          ${esc(m.name||'Unnamed')}
+        </div>
+        <div class="settings-row-desc" style="font-family:'IBM Plex Mono',monospace">${esc(m.id.slice(0,20))}…</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px">
+        <span style="font-size:9.5px;color:var(--mi);background:var(--mi2);padding:3px 7px;border-radius:99px;font-weight:700">Agency Access</span>
+        <button class="btn btn-re" style="font-size:10px;padding:4px 8px" onclick="removeTeamMember('${m.id}','${esc(m.name||'')}')">Remove</button>
+      </div>
+    </div>`).join(''));
+}
+
+async function removeTeamMember(id, name){
+  if(!confirm('Remove "'+name+'" from agency access?\n\nThey will no longer be able to log in.'))return;
+  await sb.from('profiles').delete().eq('id',id);
+  toast('Removed '+name,'ok');
+  loadTeamMembers();
+}
+
+
 function openCreateClientLogin(){
   if(!S.activeClient)return;
   document.getElementById('clModalClientName').textContent=S.activeClient.client_name;
